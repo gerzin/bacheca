@@ -33,7 +33,13 @@ def api_root(request):
         "endpoints": {
             "admin": "/admin/",
             "health": "/health/",
-            "api": "/api/",
+            "users": {
+                "register": "/api/users/register/",
+                "list": "/api/users/",
+                "me": "/api/users/me/",
+                "change_password": "/api/users/change-password/",
+            },
+            "bans": "/api/bans/",
         }
     })
 
@@ -42,5 +48,5 @@ urlpatterns = [
     path("", api_root, name="api_root"),
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),
-    path("api/", include([])),  # Placeholder for future API routes
+    path("api/", include("users.urls")),  # Users API
 ]

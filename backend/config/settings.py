@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     # Local apps
+    "users",
 ]
 
 MIDDLEWARE = [
@@ -133,6 +134,12 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Custom user model
+# https://docs.djangoproject.com/en/6.0/topics/auth/customizing/#substituting-a-custom-user-model
+
+AUTH_USER_MODEL = "users.User"
 
 
 # Django REST Framework

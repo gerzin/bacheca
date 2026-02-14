@@ -92,6 +92,12 @@ backend/
 │   ├── settings.py      # Main settings (uses environment variables)
 │   ├── urls.py          # URL routing
 │   └── wsgi.py          # WSGI entry point
+├── users/               # Users app
+│   ├── models.py        # User and Ban models
+│   ├── views.py         # API views
+│   ├── serializers.py   # DRF serializers
+│   ├── permissions.py   # Custom permissions
+│   └── urls.py          # App URL routing
 ├── tests/               # Test suite
 ├── manage.py            # Django management script
 ├── pyproject.toml       # Project dependencies
@@ -114,9 +120,35 @@ uv run pytest --cov=. --cov-report=html
 
 ## API Endpoints
 
+### General
+- `/` - API root with available endpoints
 - `/admin/` - Django admin interface
 - `/health/` - Health check endpoint
-- `/api/` - API root (add your apps here)
+
+### Users (`/api/`)
+- `POST /api/users/register/` - Register a new user
+- `GET /api/users/` - List users (staff only)
+- `GET /api/users/{id}/` - Get user details
+- `PATCH /api/users/{id}/` - Update user
+- `GET /api/users/me/` - Get current user profile
+- `PATCH /api/users/me/` - Update current user profile
+- `POST /api/users/change-password/` - Change password
+- `POST /api/users/{id}/ban/` - Ban a user (staff only)
+- `POST /api/users/{id}/unban/` - Unban a user (staff only)
+
+### Bans (`/api/bans/`) - Staff only
+- `GET /api/bans/` - List all bans
+- `GET /api/bans/{id}/` - Get ban details
+- `POST /api/bans/{id}/lift/` - Lift a ban
+
+## User Roles
+
+| Role | Permissions |
+|------|-------------|
+| Anonymous | View posts (read-only) |
+| User | Create posts, edit own profile |
+| Staff | Moderate posts, ban/unban users |
+| Superuser | Full access, cannot be banned |
 
 ## Environment Variables
 
