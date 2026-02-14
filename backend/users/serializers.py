@@ -224,9 +224,10 @@ class ChangePasswordSerializer(serializers.Serializer):
             )
         return attrs
 
-    def save(self):
+    def save(self, **kwargs):  # type: ignore[override]
         """Update user password."""
         user = self.context["request"].user
-        user.set_password(self.validated_data["new_password"])
+        validated_data: dict = self.validated_data  # type: ignore[assignment]
+        user.set_password(validated_data["new_password"])
         user.save()
         return user
