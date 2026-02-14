@@ -1,0 +1,17 @@
+# Development override - use with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/app
+      - /app/.venv
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-dev-key-for-development-only
+    command: python manage.py runserver 0.0.0.0:8000

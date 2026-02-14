@@ -1,0 +1,133 @@
+# Bacheca Backend
+
+Django REST Framework backend for the Bacheca application.
+
+## Requirements
+
+- Python 3.14+
+- PostgreSQL 17+
+- Docker & Docker Compose (optional, for containerized development)
+
+## Quick Start
+
+### Local Development (without Docker)
+
+1. **Create environment file**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your settings
+   ```
+
+2. **Install dependencies**
+   ```bash
+   uv sync
+   ```
+
+3. **Start PostgreSQL** (or use Docker for just the database)
+   ```bash
+   docker compose up db -d
+   ```
+
+4. **Run migrations**
+   ```bash
+   uv run python manage.py migrate
+   ```
+
+5. **Create superuser**
+   ```bash
+   uv run python manage.py createsuperuser
+   ```
+
+6. **Run development server**
+   ```bash
+   uv run python manage.py runserver
+   ```
+
+### Docker Development
+
+1. **Create environment file**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your settings
+   ```
+
+2. **Build and run with Docker Compose**
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+   ```
+
+3. **Run migrations**
+   ```bash
+   docker compose exec backend python manage.py migrate
+   ```
+
+4. **Create superuser**
+   ```bash
+   docker compose exec backend python manage.py createsuperuser
+   ```
+
+### Production Deployment
+
+1. **Set production environment variables**
+   - Generate a secure `SECRET_KEY`
+   - Set `DEBUG=False`
+   - Configure `ALLOWED_HOSTS`
+   - Set strong `POSTGRES_PASSWORD`
+
+2. **Build and run**
+   ```bash
+   docker compose up --build -d
+   ```
+
+3. **Run migrations**
+   ```bash
+   docker compose exec backend python manage.py migrate
+   ```
+
+## Project Structure
+
+```
+backend/
+├── config/              # Django project settings
+│   ├── settings.py      # Main settings (uses environment variables)
+│   ├── urls.py          # URL routing
+│   └── wsgi.py          # WSGI entry point
+├── tests/               # Test suite
+├── manage.py            # Django management script
+├── pyproject.toml       # Project dependencies
+├── Dockerfile           # Production Docker image
+├── Dockerfile.dev       # Development Docker image
+├── docker-compose.yml   # Production compose file
+├── docker-compose.dev.yml # Development compose override
+└── .env.example         # Environment variables template
+```
+
+## Testing
+
+```bash
+# Run tests
+uv run pytest
+
+# Run with coverage
+uv run pytest --cov=. --cov-report=html
+```
+
+## API Endpoints
+
+- `/admin/` - Django admin interface
+- `/health/` - Health check endpoint
+- `/api/` - API root (add your apps here)
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DEBUG` | Enable debug mode | `False` |
+| `SECRET_KEY` | Django secret key | Required in production |
+| `ALLOWED_HOSTS` | Comma-separated allowed hosts | `localhost,127.0.0.1` |
+| `POSTGRES_DB` | Database name | `bacheca` |
+| `POSTGRES_USER` | Database user | `postgres` |
+| `POSTGRES_PASSWORD` | Database password | `postgres` |
+| `POSTGRES_HOST` | Database host | `localhost` |
+| `POSTGRES_PORT` | Database port | `5432` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated CORS origins | `http://localhost:3000` |
