@@ -44,7 +44,9 @@ class IsStaffUser(permissions.BasePermission):
     message = "Only staff members can perform this action."
 
     def has_permission(self, request: Request, view: APIView) -> bool:  # type: ignore[override]
-        return bool(request.user and request.user.is_authenticated and request.user.is_staff)
+        return bool(
+            request.user and request.user.is_authenticated and request.user.is_staff
+        )
 
 
 class IsOwnerOrStaff(permissions.BasePermission):

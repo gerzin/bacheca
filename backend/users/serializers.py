@@ -80,6 +80,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             value = f"+39{value}"
         # Validate the format
         import re
+
         if not re.match(r"^\+39\d{9,10}$", value):
             raise serializers.ValidationError(
                 "Phone number must be in format: '+39XXXXXXXXX' (Italian format)"

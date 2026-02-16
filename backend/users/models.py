@@ -207,4 +207,3 @@ class Ban(models.Model):
         """Lift the ban early."""
         self.is_active = False
         self.save(update_fields=["is_active", "updated_at"])
-

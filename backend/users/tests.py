@@ -150,4 +150,3 @@ class TestUserAPI:
         response = client.get("/api/v1/users/me/")
         assert response.status_code == 200
         assert response.json()["email"] == "user@example.com"
-

@@ -27,23 +27,25 @@ def health_check(request):
 
 def api_root(request):
     """API root endpoint."""
-    return JsonResponse({
-        "name": "Bacheca API",
-        "version": "0.1.0",
-        "endpoints": {
-            "admin": "/admin/",
-            "health": "/health/",
-            "v1": {
-                "users": {
-                    "register": "/api/v1/users/register/",
-                    "list": "/api/v1/users/",
-                    "me": "/api/v1/users/me/",
-                    "change_password": "/api/v1/users/change-password/",
+    return JsonResponse(
+        {
+            "name": "Bacheca API",
+            "version": "0.1.0",
+            "endpoints": {
+                "admin": "/admin/",
+                "health": "/health/",
+                "v1": {
+                    "users": {
+                        "register": "/api/v1/users/register/",
+                        "list": "/api/v1/users/",
+                        "me": "/api/v1/users/me/",
+                        "change_password": "/api/v1/users/change-password/",
+                    },
+                    "bans": "/api/v1/bans/",
                 },
-                "bans": "/api/v1/bans/",
             },
         }
-    })
+    )
 
 
 urlpatterns = [

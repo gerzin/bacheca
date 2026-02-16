@@ -192,4 +192,3 @@ class BanViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(
             {"detail": "Ban lifted successfully."}, status=status.HTTP_200_OK
         )
-
