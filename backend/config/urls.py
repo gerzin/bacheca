@@ -57,6 +57,5 @@ urlpatterns = [
     path("", api_root, name="api_root"),
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),
-    path("api/v1/", include("users.urls")),
-    path("api/v1/", include("bulletin.urls")),
+    path("api/v1/", include("config.api_urls")),
 ]
