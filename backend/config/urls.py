@@ -42,6 +42,11 @@ def api_root(request):
                         "change_password": "/api/v1/users/change-password/",
                     },
                     "bans": "/api/v1/bans/",
+                    "sections": "/api/v1/sections/",
+                    "listings": {
+                        "list": "/api/v1/listings/",
+                        "my_listings": "/api/v1/listings/my-listings/",
+                    },
                 },
             },
         }
@@ -52,5 +57,6 @@ urlpatterns = [
     path("", api_root, name="api_root"),
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),
-    path("api/v1/", include("users.urls")),  # API v1
+    path("api/v1/", include("users.urls")),
+    path("api/v1/", include("bulletin.urls")),
 ]
