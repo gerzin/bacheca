@@ -79,8 +79,7 @@ class BanAdmin(admin.ModelAdmin):
     raw_id_fields = ("user", "banned_by")
     ordering = ("-created_at",)
 
+    @admin.display(description="Reason")
     def reason_preview(self, obj):
         """Show truncated reason in list view."""
         return obj.reason[:50] + "..." if len(obj.reason) > 50 else obj.reason
-
-    reason_preview.short_description = "Reason"

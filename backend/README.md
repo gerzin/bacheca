@@ -125,21 +125,21 @@ uv run pytest --cov=. --cov-report=html
 - `/admin/` - Django admin interface
 - `/health/` - Health check endpoint
 
-### Users (`/api/`)
-- `POST /api/users/register/` - Register a new user
-- `GET /api/users/` - List users (staff only)
-- `GET /api/users/{id}/` - Get user details
-- `PATCH /api/users/{id}/` - Update user
-- `GET /api/users/me/` - Get current user profile
-- `PATCH /api/users/me/` - Update current user profile
-- `POST /api/users/change-password/` - Change password
-- `POST /api/users/{id}/ban/` - Ban a user (staff only)
-- `POST /api/users/{id}/unban/` - Unban a user (staff only)
+### Users (`/api/v1/`)
+- `POST /api/v1/users/register/` - Register a new user
+- `GET /api/v1/users/` - List users (staff only)
+- `GET /api/v1/users/{id}/` - Get user details
+- `PATCH /api/v1/users/{id}/` - Update user
+- `GET /api/v1/users/me/` - Get current user profile
+- `PATCH /api/v1/users/me/` - Update current user profile
+- `POST /api/v1/users/change-password/` - Change password
+- `POST /api/v1/users/{id}/ban/` - Ban a user (staff only)
+- `POST /api/v1/users/{id}/unban/` - Unban a user (staff only)
 
-### Bans (`/api/bans/`) - Staff only
-- `GET /api/bans/` - List all bans
-- `GET /api/bans/{id}/` - Get ban details
-- `POST /api/bans/{id}/lift/` - Lift a ban
+### Bans (`/api/v1/bans/`) - Staff only
+- `GET /api/v1/bans/` - List all bans
+- `GET /api/v1/bans/{id}/` - Get ban details
+- `POST /api/v1/bans/{id}/lift/` - Lift a ban
 
 ## User Roles
 

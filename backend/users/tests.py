@@ -127,7 +127,7 @@ class TestUserAPI:
     def test_register_user(self, client):
         """Test user registration."""
         response = client.post(
-            "/api/users/register/",
+            "/api/v1/users/register/",
             {
                 "email": "newuser@example.com",
                 "first_name": "New",
@@ -147,7 +147,7 @@ class TestUserAPI:
     def test_me_endpoint(self, client, user):
         """Test the /me endpoint."""
         client.force_login(user)
-        response = client.get("/api/users/me/")
+        response = client.get("/api/v1/users/me/")
         assert response.status_code == 200
         assert response.json()["email"] == "user@example.com"
 
