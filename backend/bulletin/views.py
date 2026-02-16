@@ -57,7 +57,7 @@ class SectionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Return sections with listing counts."""
         queryset = Section.objects.annotate(
-            listing_count=Count(
+            published_listing_count=Count(
                 "listings",
                 filter=Q(listings__status=Listing.Status.PUBLISHED),
             )
