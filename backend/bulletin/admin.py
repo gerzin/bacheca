@@ -133,7 +133,12 @@ class ListingAdmin(admin.ModelAdmin):
 
     readonly_fields = ("created_at", "updated_at", "published_at")
 
-    actions = ["publish_listings", "archive_listings", "flag_listings", "unflag_listings"]
+    actions = [
+        "publish_listings",
+        "archive_listings",
+        "flag_listings",
+        "unflag_listings",
+    ]
 
     def publish_listings(self, request, queryset):
         """Publish selected listings."""
