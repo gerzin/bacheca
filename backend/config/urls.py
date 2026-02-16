@@ -25,8 +25,32 @@ def health_check(request):
     return JsonResponse({"status": "healthy"})
 
 
+def api_root(request):
+    """API root endpoint."""
+    return JsonResponse(
+        {
+            "name": "Bacheca API",
+            "version": "0.1.0",
+            "endpoints": {
+                "admin": "/admin/",
+                "health": "/health/",
+                "v1": {
+                    "users": {
+                        "register": "/api/v1/users/register/",
+                        "list": "/api/v1/users/",
+                        "me": "/api/v1/users/me/",
+                        "change_password": "/api/v1/users/change-password/",
+                    },
+                    "bans": "/api/v1/bans/",
+                },
+            },
+        }
+    )
+
+
 urlpatterns = [
+    path("", api_root, name="api_root"),
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),
-    path("api/", include([])),  # Placeholder for future API routes
+    path("api/v1/", include("users.urls")),  # API v1
 ]
