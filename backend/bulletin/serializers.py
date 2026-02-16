@@ -11,7 +11,9 @@ User = get_user_model()
 class SectionSerializer(serializers.ModelSerializer):
     """Serializer for Section model (read-only for regular users)."""
 
-    listing_count = serializers.IntegerField(source="published_listing_count", read_only=True)
+    listing_count = serializers.IntegerField(
+        source="published_listing_count", read_only=True
+    )
 
     class Meta:
         model = Section
@@ -30,7 +32,9 @@ class SectionSerializer(serializers.ModelSerializer):
 class SectionAdminSerializer(serializers.ModelSerializer):
     """Serializer for Section model (admin only - full CRUD)."""
 
-    listing_count = serializers.IntegerField(source="published_listing_count", read_only=True)
+    listing_count = serializers.IntegerField(
+        source="published_listing_count", read_only=True
+    )
 
     class Meta:
         model = Section
