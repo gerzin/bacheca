@@ -6,6 +6,7 @@ export interface User {
     full_name: string;
     phone_number?: string;
     is_staff: boolean;
+    is_superuser?: boolean;
     is_banned?: boolean;
 }
 
@@ -22,6 +23,15 @@ export interface LoginResponse {
 export interface LoginRequest {
     identifier: string;
     password: string;
+}
+
+export interface RegisterRequest {
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone_number?: string;
+    password: string;
+    password_confirm: string;
 }
 
 export interface ApiError {
@@ -44,6 +54,7 @@ export interface ListingAuthor {
     first_name: string;
     last_name: string;
     full_name: string;
+    is_staff: boolean;
 }
 
 export interface Listing {

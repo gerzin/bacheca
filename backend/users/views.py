@@ -52,6 +52,7 @@ class LoginView(APIView):
                     "full_name": user.get_full_name(),
                     "phone_number": user.phone_number,
                     "is_staff": user.is_staff,
+                    "is_superuser": user.is_superuser,
                     "is_banned": user.is_currently_banned,
                 },
                 "tokens": {

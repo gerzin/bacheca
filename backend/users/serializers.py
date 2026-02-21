@@ -103,6 +103,7 @@ class UserSerializer(serializers.ModelSerializer):
             "full_name",
             "phone_number",
             "is_staff",
+            "is_superuser",
             "is_protected",
             "is_banned",
             "created_at",
@@ -111,6 +112,7 @@ class UserSerializer(serializers.ModelSerializer):
             "id",
             "email",
             "is_staff",
+            "is_superuser",
             "is_protected",
             "created_at",
         ]

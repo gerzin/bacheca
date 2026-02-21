@@ -12,10 +12,10 @@ export default function Home() {
           {/* Welcome section */}
           <section className="mb-8 text-center sm:text-left">
             <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-3xl">
-              Bacheca
+              Bacheca Buccino
             </h2>
             <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-              La tua bacheca per annunci e comunicazioni
+              La tua bacheca per annunci e comunicazioni locali
             </p>
           </section>
 

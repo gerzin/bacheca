@@ -1,4 +1,4 @@
-import { LoginRequest, LoginResponse, ApiError, Section, Listing, PaginatedResponse, CreateListingRequest, UpdateListingRequest } from "./types";
+import { LoginRequest, LoginResponse, ApiError, Section, Listing, PaginatedResponse, CreateListingRequest, UpdateListingRequest, RegisterRequest, User } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -61,6 +61,22 @@ class ApiService {
         }
 
         return response;
+    }
+
+    async register(data: RegisterRequest): Promise<User> {
+        return this.request<User>("/users/register/", {
+            method: "POST",
+            body: JSON.stringify(data),
+        });
+    }
+
+    async getMe(): Promise<User> {
+        const user = await this.request<User>("/users/me/");
+        // Update stored user data
+        if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(user));
+        }
+        return user;
     }
 
     logout(): void {
@@ -162,6 +178,20 @@ class ApiService {
             method: "POST",
         });
     }
+
+    // Staff actions
+    async banUser(userId: number, reason?: string): Promise<void> {
+        await this.request<void>(`/users/${userId}/ban/`, {
+            method: "POST",
+            body: JSON.stringify({ reason: reason || "Banned by staff" }),
+        });
+    }
+
+    async unbanUser(userId: number): Promise<void> {
+        await this.request<void>(`/users/${userId}/unban/`, {
+            method: "POST",
+        });
+    }
 }
 
 export class ApiServiceError extends Error {
@@ -176,7 +206,7 @@ export class ApiServiceError extends Error {
 
     static formatMessage(errors: ApiError): string {
         const messages: string[] = [];
-        for (const [key, value] of Object.entries(errors)) {
+        for (const [, value] of Object.entries(errors)) {
             if (Array.isArray(value)) {
                 messages.push(...value);
             } else if (typeof value === "string") {

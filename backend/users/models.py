@@ -130,9 +130,15 @@ class User(AbstractUser):
 
     def can_be_banned_by(self, staff_user):
         """Check if this user can be banned by the given staff user."""
+        # Cannot ban yourself
+        if self.id == staff_user.id:
+            return False
         if self.is_protected:
             return False
         if self.is_superuser:
+            return False
+        # Staff users can only be banned by superusers
+        if self.is_staff and not staff_user.is_superuser:
             return False
         return staff_user.is_staff or staff_user.is_superuser
 

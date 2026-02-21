@@ -2,25 +2,26 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import LoginModal from "./LoginModal";
+import AuthModal from "./AuthModal";
 import { api } from "@/lib/api";
 import type { User } from "@/lib/types";
 
 export default function Header() {
     const [user, setUser] = useState<User | null>(null);
-    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
-    // Check for stored user on mount
+    // Check for stored user on mount (needed for SSR hydration)
     useEffect(() => {
         const storedUser = api.getStoredUser();
         if (storedUser) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setUser(storedUser);
         }
     }, []);
 
     const handleLogin = (userData: User) => {
         setUser(userData);
-        setShowLoginModal(false);
+        setShowAuthModal(false);
     };
 
     const handleLogout = () => {
@@ -65,10 +66,10 @@ export default function Header() {
                             </div>
                         ) : (
                             <button
-                                onClick={() => setShowLoginModal(true)}
+                                onClick={() => setShowAuthModal(true)}
                                 className="group relative overflow-hidden rounded-full bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-2 text-sm font-medium text-white shadow-lg shadow-violet-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/30 active:scale-95"
                             >
-                                <span className="relative z-10">Login</span>
+                                <span className="relative z-10">Login o Registrati</span>
                                 <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                             </button>
                         )}
@@ -76,9 +77,9 @@ export default function Header() {
                 </div>
             </header>
 
-            <LoginModal
-                isOpen={showLoginModal}
-                onClose={() => setShowLoginModal(false)}
+            <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
                 onLogin={handleLogin}
             />
         </>

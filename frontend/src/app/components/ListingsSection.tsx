@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
-import { Section, Listing } from "@/lib/types";
+import { Section, Listing, User } from "@/lib/types";
 import SectionTabs from "./SectionTabs";
 import ListingCard from "./ListingCard";
 
@@ -19,6 +19,31 @@ export default function ListingsSection() {
     const [activeListingType, setActiveListingType] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+    // Get current user on mount and listen for storage changes
+    useEffect(() => {
+        // First, set from localStorage for immediate UI
+        const storedUser = api.getStoredUser();
+        setCurrentUser(storedUser);
+
+        // Then refresh from API if authenticated (to get updated is_staff, etc.)
+        if (storedUser && api.isAuthenticated()) {
+            api.getMe().then((freshUser) => {
+                setCurrentUser(freshUser);
+            }).catch(() => {
+                // Token might be invalid, user stays with stored data
+            });
+        }
+
+        // Listen for storage changes (login/logout)
+        const handleStorageChange = () => {
+            const user = api.getStoredUser();
+            setCurrentUser(user);
+        };
+        window.addEventListener("storage", handleStorageChange);
+        return () => window.removeEventListener("storage", handleStorageChange);
+    }, []);
 
     // Fetch sections on mount
     useEffect(() => {
@@ -54,6 +79,16 @@ export default function ListingsSection() {
         };
         fetchListings();
     }, [activeSection, activeListingType]);
+
+    // Handle listing deletion (staff action)
+    const handleListingDelete = (listingId: number) => {
+        setListings((prev) => prev.filter((l) => l.id !== listingId));
+    };
+
+    // Handle user ban - remove all listings by that user (staff action)
+    const handleUserBanned = (userId: number) => {
+        setListings((prev) => prev.filter((l) => l.author.id !== userId));
+    };
 
     return (
         <div>
@@ -177,7 +212,13 @@ export default function ListingsSection() {
             {!isLoading && !error && listings.length > 0 && (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {listings.map((listing) => (
-                        <ListingCard key={listing.id} listing={listing} />
+                        <ListingCard
+                            key={listing.id}
+                            listing={listing}
+                            currentUser={currentUser}
+                            onDelete={handleListingDelete}
+                            onUserBanned={handleUserBanned}
+                        />
                     ))}
                 </div>
             )}
