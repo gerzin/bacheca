@@ -183,8 +183,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                             type="button"
                             onClick={() => switchMode("login")}
                             className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${mode === "login"
-                                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                                 }`}
                         >
                             Login
@@ -193,8 +193,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                             type="button"
                             onClick={() => switchMode("register")}
                             className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${mode === "register"
-                                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                                 }`}
                         >
                             Registrati
@@ -216,8 +216,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                                     type="button"
                                     onClick={() => setLoginMethod("email")}
                                     className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${loginMethod === "email"
-                                            ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                                            : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                                        ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                                        : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                                         }`}
                                 >
                                     Email
@@ -226,8 +226,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                                     type="button"
                                     onClick={() => setLoginMethod("phone")}
                                     className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${loginMethod === "phone"
-                                            ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                                            : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                                        ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                                        : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                                         }`}
                                 >
                                     Telefono
