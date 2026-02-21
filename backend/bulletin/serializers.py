@@ -1,11 +1,17 @@
 """Serializers for the bulletin app."""
 
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Listing, Section
 
 User = get_user_model()
+
+# Maximum listing duration for non-privileged users (2 weeks)
+MAX_LISTING_DURATION_DAYS = 14
 
 
 class SectionSerializer(serializers.ModelSerializer):
@@ -61,7 +67,7 @@ class ListingAuthorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "full_name"]
+        fields = ["id", "first_name", "last_name", "full_name", "is_staff"]
         read_only_fields = fields
 
 
@@ -75,11 +81,17 @@ class ListingSerializer(serializers.ModelSerializer):
         write_only=True,
     )
     author = ListingAuthorSerializer(read_only=True)
-    listing_type_display = serializers.CharField(
-        source="get_listing_type_display", read_only=True
-    )
+    listing_type_display = serializers.SerializerMethodField()
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
+
+    def get_listing_type_display(self, obj):
+        """Get the display label for the listing type from the section."""
+        if not obj.listing_type:
+            return None
+        label = obj.section.get_listing_type_label(obj.listing_type)
+        # Fallback to raw value (capitalized) if label not found
+        return label or obj.listing_type.capitalize()
 
     class Meta:
         model = Listing
@@ -134,6 +146,12 @@ class ListingCreateSerializer(serializers.ModelSerializer):
         queryset=Section.objects.filter(is_active=True),
         source="section",
     )
+    listing_type = serializers.CharField(
+        max_length=50,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
     contact_phone = serializers.CharField(
         max_length=13,
         required=False,
@@ -172,32 +190,90 @@ class ListingCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        """Validate listing type is allowed in the selected section."""
+        """Validate listing type based on section requirements."""
         section = attrs.get("section")
         listing_type = attrs.get("listing_type")
 
-        if section and section.allowed_listing_types:
-            if listing_type not in section.allowed_listing_types:
-                allowed = ", ".join(section.allowed_listing_types)
+        # Normalize empty string to None
+        if listing_type == "":
+            attrs["listing_type"] = None
+            listing_type = None
+
+        if section:
+            allowed_values = section.get_allowed_type_values()
+            if allowed_values:
+                # Section requires a listing type
+                if not listing_type:
+                    allowed = ", ".join(allowed_values)
+                    raise serializers.ValidationError(
+                        {
+                            "listing_type": (
+                                f"This section requires a listing type. "
+                                f"Allowed types: {allowed}"
+                            )
+                        }
+                    )
+                if listing_type not in allowed_values:
+                    allowed = ", ".join(allowed_values)
+                    raise serializers.ValidationError(
+                        {
+                            "listing_type": (
+                                f"'{listing_type}' is not allowed in section '{section.name}'. "
+                                f"Allowed types: {allowed}"
+                            )
+                        }
+                    )
+            else:
+                # Section doesn't use listing types - clear it
+                attrs["listing_type"] = None
+
+        # Validate expires_at for non-privileged users
+        user = self.context["request"].user
+        expires_at = attrs.get("expires_at")
+
+        if not user.is_staff:
+            max_expiry = timezone.now() + timedelta(days=MAX_LISTING_DURATION_DAYS)
+            if expires_at is None:
+                # Default to 2 weeks for regular users
+                attrs["expires_at"] = max_expiry
+            elif expires_at > max_expiry:
                 raise serializers.ValidationError(
                     {
-                        "listing_type": (
-                            f"'{listing_type}' is not allowed in section '{section.name}'. "
-                            f"Allowed types: {allowed}"
+                        "expires_at": (
+                            f"Listings can only last up to {MAX_LISTING_DURATION_DAYS} days. "
+                            f"Maximum expiry date: {max_expiry.strftime('%Y-%m-%d %H:%M')}"
                         )
                     }
                 )
+
         return attrs
 
     def create(self, validated_data):
         """Create listing with the current user as author."""
-        validated_data["author"] = self.context["request"].user
+        user = self.context["request"].user
+
+        # Check if user is banned
+        if hasattr(user, "is_currently_banned") and user.is_currently_banned:
+            raise serializers.ValidationError(
+                {"non_field_errors": ["You are currently banned and cannot create listings."]}
+            )
+
+        validated_data["author"] = user
+        # Set published_at since default status is now PUBLISHED
+        if validated_data.get("status", Listing.Status.PUBLISHED) == Listing.Status.PUBLISHED:
+            validated_data["published_at"] = timezone.now()
         return super().create(validated_data)
 
 
 class ListingUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating a listing."""
 
+    listing_type = serializers.CharField(
+        max_length=50,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
     contact_phone = serializers.CharField(
         max_length=13,
         required=False,
@@ -234,16 +310,34 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """Validate listing type is allowed in the section."""
+        # Check if user is banned
+        user = self.context["request"].user
+        if hasattr(user, "is_currently_banned") and user.is_currently_banned:
+            raise serializers.ValidationError(
+                {"non_field_errors": ["You are currently banned and cannot update listings."]}
+            )
+
         listing_type = attrs.get("listing_type")
+
+        # Normalize empty string to None
+        if listing_type == "":
+            attrs["listing_type"] = None
+            listing_type = None
 
         if self.instance is None:
             return attrs
 
         section = self.instance.section
+        allowed_values = section.get_allowed_type_values()
 
-        if listing_type and section.allowed_listing_types:
-            if listing_type not in section.allowed_listing_types:
-                allowed = ", ".join(section.allowed_listing_types)
+        # If section doesn't use listing types, clear it
+        if not allowed_values:
+            if "listing_type" in attrs:
+                attrs["listing_type"] = None
+        elif listing_type is not None:
+            # Section has allowed types - validate the value
+            if listing_type not in allowed_values:
+                allowed = ", ".join(allowed_values)
                 raise serializers.ValidationError(
                     {
                         "listing_type": (
@@ -252,6 +346,22 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
                         )
                     }
                 )
+
+        # Validate expires_at for non-privileged users
+        expires_at = attrs.get("expires_at")
+
+        if not user.is_staff and expires_at is not None:
+            max_expiry = timezone.now() + timedelta(days=MAX_LISTING_DURATION_DAYS)
+            if expires_at > max_expiry:
+                raise serializers.ValidationError(
+                    {
+                        "expires_at": (
+                            f"Listings can only last up to {MAX_LISTING_DURATION_DAYS} days. "
+                            f"Maximum expiry date: {max_expiry.strftime('%Y-%m-%d %H:%M')}"
+                        )
+                    }
+                )
+
         return attrs
 
 

@@ -1,4 +1,4 @@
-import { LoginRequest, LoginResponse, ApiError } from "./types";
+import { LoginRequest, LoginResponse, ApiError, Section, Listing, PaginatedResponse, CreateListingRequest, UpdateListingRequest, RegisterRequest, User } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -39,6 +39,11 @@ class ApiService {
             throw new ApiServiceError(response.status, errorData);
         }
 
+        // Handle 204 No Content responses
+        if (response.status === 204) {
+            return undefined as T;
+        }
+
         return response.json();
     }
 
@@ -56,6 +61,22 @@ class ApiService {
         }
 
         return response;
+    }
+
+    async register(data: RegisterRequest): Promise<User> {
+        return this.request<User>("/users/register/", {
+            method: "POST",
+            body: JSON.stringify(data),
+        });
+    }
+
+    async getMe(): Promise<User> {
+        const user = await this.request<User>("/users/me/");
+        // Update stored user data
+        if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(user));
+        }
+        return user;
     }
 
     logout(): void {
@@ -101,6 +122,76 @@ class ApiService {
             return null;
         }
     }
+
+    // Sections
+    async getSections(): Promise<Section[]> {
+        const response = await this.request<PaginatedResponse<Section>>("/sections/");
+        return response.results;
+    }
+
+    // Listings
+    async getListings(sectionSlug?: string, listingType?: string): Promise<Listing[]> {
+        const params = new URLSearchParams();
+        if (sectionSlug) {
+            params.append("section", sectionSlug);
+        }
+        if (listingType) {
+            params.append("listing_type", listingType);
+        }
+        const queryString = params.toString();
+        const endpoint = `/listings/${queryString ? `?${queryString}` : ""}`;
+        const response = await this.request<PaginatedResponse<Listing>>(endpoint);
+        return response.results;
+    }
+
+    async getListing(id: number): Promise<Listing> {
+        return this.request<Listing>(`/listings/${id}/`);
+    }
+
+    async createListing(data: CreateListingRequest): Promise<Listing> {
+        return this.request<Listing>("/listings/", {
+            method: "POST",
+            body: JSON.stringify(data),
+        });
+    }
+
+    async getMyListings(): Promise<Listing[]> {
+        const response = await this.request<PaginatedResponse<Listing>>("/listings/my_listings/");
+        return response.results;
+    }
+
+    async updateListing(id: number, data: UpdateListingRequest): Promise<Listing> {
+        return this.request<Listing>(`/listings/${id}/`, {
+            method: "PATCH",
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteListing(id: number): Promise<void> {
+        await this.request<void>(`/listings/${id}/`, {
+            method: "DELETE",
+        });
+    }
+
+    async publishListing(id: number): Promise<Listing> {
+        return this.request<Listing>(`/listings/${id}/publish/`, {
+            method: "POST",
+        });
+    }
+
+    // Staff actions
+    async banUser(userId: number, reason?: string): Promise<void> {
+        await this.request<void>(`/users/${userId}/ban/`, {
+            method: "POST",
+            body: JSON.stringify({ reason: reason || "Banned by staff" }),
+        });
+    }
+
+    async unbanUser(userId: number): Promise<void> {
+        await this.request<void>(`/users/${userId}/unban/`, {
+            method: "POST",
+        });
+    }
 }
 
 export class ApiServiceError extends Error {
@@ -115,7 +206,7 @@ export class ApiServiceError extends Error {
 
     static formatMessage(errors: ApiError): string {
         const messages: string[] = [];
-        for (const [key, value] of Object.entries(errors)) {
+        for (const [, value] of Object.entries(errors)) {
             if (Array.isArray(value)) {
                 messages.push(...value);
             } else if (typeof value === "string") {

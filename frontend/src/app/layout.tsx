@@ -23,12 +23,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Bacheca",
+  title: "Bacheca Buccino - La tua bacheca di annunci locale",
   description: "Bacheca - Your bulletin board app",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Bacheca",
+    title: "Bacheca Buccino",
+
   },
   formatDetection: {
     telephone: false,

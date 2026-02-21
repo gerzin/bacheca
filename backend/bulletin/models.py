@@ -22,13 +22,6 @@ class Section(models.Model):
     of the bulletin board (e.g., "Lavoro", "Immobili", "Servizi").
     """
 
-    # Listing type choices that can be enabled per section
-    class ListingType(models.TextChoices):
-        """Types of listings within a section."""
-
-        CERCO = "cerco", "Cerco"  # Looking for / Seeking
-        OFFRO = "offro", "Offro"  # Offering
-
     name = models.CharField(
         "name",
         max_length=100,
@@ -59,7 +52,7 @@ class Section(models.Model):
         "allowed listing types",
         default=list,
         blank=True,
-        help_text="List of allowed listing types: ['cerco', 'offro']",
+        help_text='List of listing type objects: [{"value": "cerco", "label": "Cerco"}, {"value": "offro", "label": "Offro"}]. Empty list means no listing type required.',
     )
 
     # Ordering and visibility
@@ -104,6 +97,25 @@ class Section(models.Model):
         """Return the number of published listings in this section."""
         return self.listings.filter(status=Listing.Status.PUBLISHED).count()
 
+    def get_listing_type_label(self, value: str) -> str | None:
+        """Get the display label for a listing type value."""
+        for lt in self.allowed_listing_types:
+            if isinstance(lt, dict) and lt.get("value") == value:
+                return lt.get("label", value)
+            elif lt == value:  # Backward compatibility with old string format
+                return value.capitalize()
+        return None
+
+    def get_allowed_type_values(self) -> list[str]:
+        """Get list of allowed listing type values."""
+        values = []
+        for lt in self.allowed_listing_types:
+            if isinstance(lt, dict):
+                values.append(lt.get("value", ""))
+            else:  # Backward compatibility with old string format
+                values.append(lt)
+        return values
+
 
 class Listing(models.Model):
     """
@@ -120,12 +132,6 @@ class Listing(models.Model):
         PUBLISHED = "published", "Published"
         ARCHIVED = "archived", "Archived"
         EXPIRED = "expired", "Expired"
-
-    class ListingType(models.TextChoices):
-        """Type of listing (seeking or offering)."""
-
-        CERCO = "cerco", "Cerco"  # Looking for / Seeking
-        OFFRO = "offro", "Offro"  # Offering
 
     # Relationships
     section = models.ForeignKey(
@@ -148,9 +154,10 @@ class Listing(models.Model):
     )
     listing_type = models.CharField(
         "listing type",
-        max_length=10,
-        choices=ListingType.choices,
-        help_text="Whether you're seeking or offering",
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Type of listing (defined by section, e.g., 'cerco', 'offro', 'affitto')",
     )
     description = models.TextField(
         "description",
@@ -203,7 +210,7 @@ class Listing(models.Model):
         "status",
         max_length=10,
         choices=Status.choices,
-        default=Status.DRAFT,
+        default=Status.PUBLISHED,
     )
     expires_at = models.DateTimeField(
         "expires at",
@@ -242,12 +249,11 @@ class Listing(models.Model):
             models.Index(fields=["author", "status"]),
         ]
 
-    if TYPE_CHECKING:
-
-        def get_listing_type_display(self) -> str: ...
-
     def __str__(self) -> str:
-        return f"{self.title} ({self.get_listing_type_display()})"
+        if self.listing_type:
+            type_label = self.section.get_listing_type_label(self.listing_type)
+            return f"{self.title} ({type_label})"
+        return f"{self.title} ({self.section.name})"
 
     def save(self, *args, **kwargs) -> None:
         """Set published_at when status changes to published."""
