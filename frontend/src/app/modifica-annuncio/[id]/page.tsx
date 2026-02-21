@@ -7,8 +7,8 @@ import { api, ApiServiceError } from "@/lib/api";
 import { Listing, User } from "@/lib/types";
 
 const LISTING_TYPES = [
-    { value: "cerco", label: "Cerco", description: "Sto cercando qualcosa" },
     { value: "offro", label: "Offro", description: "Offro qualcosa" },
+    { value: "cerco", label: "Cerco", description: "Sto cercando qualcosa" },
 ] as const;
 
 // Maximum days for regular users

@@ -8,8 +8,8 @@ import ListingCard from "./ListingCard";
 
 // Available listing types
 const LISTING_TYPES = [
-    { value: "cerco", label: "Cerco", color: "blue" },
     { value: "offro", label: "Offro", color: "emerald" },
+    { value: "cerco", label: "Cerco", color: "blue" },
 ] as const;
 
 export default function ListingsSection() {

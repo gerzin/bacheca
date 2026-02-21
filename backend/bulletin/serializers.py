@@ -217,7 +217,18 @@ class ListingCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create listing with the current user as author."""
-        validated_data["author"] = self.context["request"].user
+        user = self.context["request"].user
+
+        # Check if user is banned
+        if hasattr(user, "is_currently_banned") and user.is_currently_banned:
+            raise serializers.ValidationError(
+                {"non_field_errors": ["You are currently banned and cannot create listings."]}
+            )
+
+        validated_data["author"] = user
+        # Set published_at since default status is now PUBLISHED
+        if validated_data.get("status", Listing.Status.PUBLISHED) == Listing.Status.PUBLISHED:
+            validated_data["published_at"] = timezone.now()
         return super().create(validated_data)
 
 
@@ -260,6 +271,13 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """Validate listing type is allowed in the section."""
+        # Check if user is banned
+        user = self.context["request"].user
+        if hasattr(user, "is_currently_banned") and user.is_currently_banned:
+            raise serializers.ValidationError(
+                {"non_field_errors": ["You are currently banned and cannot update listings."]}
+            )
+
         listing_type = attrs.get("listing_type")
 
         if self.instance is None:
@@ -280,7 +298,6 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
                 )
 
         # Validate expires_at for non-privileged users
-        user = self.context["request"].user
         expires_at = attrs.get("expires_at")
 
         if not user.is_staff and expires_at is not None:

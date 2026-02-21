@@ -203,7 +203,7 @@ class Listing(models.Model):
         "status",
         max_length=10,
         choices=Status.choices,
-        default=Status.DRAFT,
+        default=Status.PUBLISHED,
     )
     expires_at = models.DateTimeField(
         "expires at",

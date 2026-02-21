@@ -6,6 +6,7 @@ export interface User {
     full_name: string;
     phone_number?: string;
     is_staff: boolean;
+    is_banned?: boolean;
 }
 
 export interface AuthTokens {
