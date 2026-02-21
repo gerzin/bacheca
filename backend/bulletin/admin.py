@@ -39,6 +39,7 @@ class SectionAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="Allowed Types")
     def allowed_types_display(self, obj):
         """Display allowed listing types as badges."""
         if not obj.allowed_listing_types:
@@ -46,8 +47,7 @@ class SectionAdmin(admin.ModelAdmin):
         types = ", ".join(obj.allowed_listing_types)
         return types
 
-    allowed_types_display.short_description = "Allowed Types"
-
+    @admin.display(description="Published")
     def listing_count(self, obj):
         """Display the number of published listings."""
         count = obj.listing_count
@@ -56,8 +56,6 @@ class SectionAdmin(admin.ModelAdmin):
             "green" if count > 0 else "gray",
             count,
         )
-
-    listing_count.short_description = "Published"
 
 
 @admin.register(Listing)
@@ -140,6 +138,7 @@ class ListingAdmin(admin.ModelAdmin):
         "unflag_listings",
     ]
 
+    @admin.action(description="Publish selected listings")
     def publish_listings(self, request, queryset):
         """Publish selected listings."""
         count = 0
@@ -148,25 +147,20 @@ class ListingAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(request, f"{count} listing(s) published successfully.")
 
-    publish_listings.short_description = "Publish selected listings"
-
+    @admin.action(description="Archive selected listings")
     def archive_listings(self, request, queryset):
         """Archive selected listings."""
         count = queryset.update(status=Listing.Status.ARCHIVED)
         self.message_user(request, f"{count} listing(s) archived successfully.")
 
-    archive_listings.short_description = "Archive selected listings"
-
+    @admin.action(description="Flag selected listings")
     def flag_listings(self, request, queryset):
         """Flag selected listings for review."""
         count = queryset.update(is_flagged=True, flagged_reason="Flagged by admin")
         self.message_user(request, f"{count} listing(s) flagged for review.")
 
-    flag_listings.short_description = "Flag selected listings"
-
+    @admin.action(description="Unflag selected listings")
     def unflag_listings(self, request, queryset):
         """Remove flags from selected listings."""
         count = queryset.update(is_flagged=False, flagged_reason="")
         self.message_user(request, f"{count} listing(s) unflagged.")
-
-    unflag_listings.short_description = "Unflag selected listings"

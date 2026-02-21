@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 if TYPE_CHECKING:
-    from django.db.models.manager import Manager
+    from django.db.models.manager import RelatedManager
 
 
 class Section(models.Model):
@@ -77,6 +77,10 @@ class Section(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # Type hints for reverse relations
+    if TYPE_CHECKING:
+        listings: RelatedManager[Listing]
 
     class Meta:
         verbose_name = "section"
@@ -228,8 +232,6 @@ class Listing(models.Model):
         blank=True,
     )
 
-    objects: Manager[Listing]
-
     class Meta:
         verbose_name = "listing"
         verbose_name_plural = "listings"
@@ -239,6 +241,10 @@ class Listing(models.Model):
             models.Index(fields=["section", "status"]),
             models.Index(fields=["author", "status"]),
         ]
+
+    if TYPE_CHECKING:
+
+        def get_listing_type_display(self) -> str: ...
 
     def __str__(self) -> str:
         return f"{self.title} ({self.get_listing_type_display()})"

@@ -235,6 +235,10 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         """Validate listing type is allowed in the section."""
         listing_type = attrs.get("listing_type")
+
+        if self.instance is None:
+            return attrs
+
         section = self.instance.section
 
         if listing_type and section.allowed_listing_types:

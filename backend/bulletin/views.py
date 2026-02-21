@@ -54,7 +54,7 @@ class SectionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsStaffOrReadOnly]
     lookup_field = "slug"
 
-    def get_queryset(self):
+    def get_queryset(self):  # type: ignore[override]
         """Return sections with listing counts."""
         queryset = Section.objects.annotate(
             published_listing_count=Count(
@@ -67,7 +67,7 @@ class SectionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(is_active=True)
         return queryset.order_by("order", "name")
 
-    def get_serializer_class(self):
+    def get_serializer_class(self):  # type: ignore[override]
         """Return appropriate serializer based on user role."""
         if self.request.user.is_staff:
             return SectionAdminSerializer
@@ -96,7 +96,7 @@ class ListingViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsOwnerOrStaff()]
 
-    def get_queryset(self):
+    def get_queryset(self):  # type: ignore[override]
         """Return listings based on user permissions."""
         queryset = Listing.objects.select_related("section", "author")
 
@@ -113,7 +113,7 @@ class ListingViewSet(viewsets.ModelViewSet):
         # Anonymous users can only see published listings
         return queryset.filter(status=Listing.Status.PUBLISHED)
 
-    def get_serializer_class(self):
+    def get_serializer_class(self):  # type: ignore[override]
         """Return appropriate serializer based on action and user."""
         if self.action == "create":
             return ListingCreateSerializer
