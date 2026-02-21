@@ -56,11 +56,15 @@ export interface Listing {
     location: string;
     price: string | null;
     price_negotiable: boolean;
-    status: "draft" | "published" | "closed" | "expired";
+    status: "draft" | "published" | "archived" | "expired";
     status_display: string;
     is_expired: boolean;
     published_at: string | null;
     created_at: string;
+    updated_at?: string;
+    expires_at?: string | null;
+    contact_email?: string;
+    contact_phone?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -68,4 +72,31 @@ export interface PaginatedResponse<T> {
     next: string | null;
     previous: string | null;
     results: T[];
+}
+
+// Create listing
+export interface CreateListingRequest {
+    section_id: number;
+    title: string;
+    listing_type: "cerco" | "offro";
+    description: string;
+    location?: string;
+    price?: string;
+    price_negotiable?: boolean;
+    contact_email?: string;
+    contact_phone?: string;
+    expires_at?: string;
+}
+
+// Update listing
+export interface UpdateListingRequest {
+    title?: string;
+    listing_type?: "cerco" | "offro";
+    description?: string;
+    location?: string;
+    price?: string | null;
+    price_negotiable?: boolean;
+    contact_email?: string;
+    contact_phone?: string;
+    expires_at?: string;
 }

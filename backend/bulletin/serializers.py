@@ -1,11 +1,17 @@
 """Serializers for the bulletin app."""
 
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Listing, Section
 
 User = get_user_model()
+
+# Maximum listing duration for non-privileged users (2 weeks)
+MAX_LISTING_DURATION_DAYS = 14
 
 
 class SectionSerializer(serializers.ModelSerializer):
@@ -187,6 +193,26 @@ class ListingCreateSerializer(serializers.ModelSerializer):
                         )
                     }
                 )
+
+        # Validate expires_at for non-privileged users
+        user = self.context["request"].user
+        expires_at = attrs.get("expires_at")
+
+        if not user.is_staff:
+            max_expiry = timezone.now() + timedelta(days=MAX_LISTING_DURATION_DAYS)
+            if expires_at is None:
+                # Default to 2 weeks for regular users
+                attrs["expires_at"] = max_expiry
+            elif expires_at > max_expiry:
+                raise serializers.ValidationError(
+                    {
+                        "expires_at": (
+                            f"Listings can only last up to {MAX_LISTING_DURATION_DAYS} days. "
+                            f"Maximum expiry date: {max_expiry.strftime('%Y-%m-%d %H:%M')}"
+                        )
+                    }
+                )
+
         return attrs
 
     def create(self, validated_data):
@@ -252,6 +278,23 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
                         )
                     }
                 )
+
+        # Validate expires_at for non-privileged users
+        user = self.context["request"].user
+        expires_at = attrs.get("expires_at")
+
+        if not user.is_staff and expires_at is not None:
+            max_expiry = timezone.now() + timedelta(days=MAX_LISTING_DURATION_DAYS)
+            if expires_at > max_expiry:
+                raise serializers.ValidationError(
+                    {
+                        "expires_at": (
+                            f"Listings can only last up to {MAX_LISTING_DURATION_DAYS} days. "
+                            f"Maximum expiry date: {max_expiry.strftime('%Y-%m-%d %H:%M')}"
+                        )
+                    }
+                )
+
         return attrs
 
 

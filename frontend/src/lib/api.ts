@@ -1,4 +1,4 @@
-import { LoginRequest, LoginResponse, ApiError, Section, Listing, PaginatedResponse } from "./types";
+import { LoginRequest, LoginResponse, ApiError, Section, Listing, PaginatedResponse, CreateListingRequest, UpdateListingRequest } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -37,6 +37,11 @@ class ApiService {
                 detail: "An error occurred",
             }));
             throw new ApiServiceError(response.status, errorData);
+        }
+
+        // Handle 204 No Content responses
+        if (response.status === 204) {
+            return undefined as T;
         }
 
         return response.json();
@@ -109,10 +114,13 @@ class ApiService {
     }
 
     // Listings
-    async getListings(sectionSlug?: string): Promise<Listing[]> {
+    async getListings(sectionSlug?: string, listingType?: string): Promise<Listing[]> {
         const params = new URLSearchParams();
         if (sectionSlug) {
             params.append("section", sectionSlug);
+        }
+        if (listingType) {
+            params.append("listing_type", listingType);
         }
         const queryString = params.toString();
         const endpoint = `/listings/${queryString ? `?${queryString}` : ""}`;
@@ -122,6 +130,37 @@ class ApiService {
 
     async getListing(id: number): Promise<Listing> {
         return this.request<Listing>(`/listings/${id}/`);
+    }
+
+    async createListing(data: CreateListingRequest): Promise<Listing> {
+        return this.request<Listing>("/listings/", {
+            method: "POST",
+            body: JSON.stringify(data),
+        });
+    }
+
+    async getMyListings(): Promise<Listing[]> {
+        const response = await this.request<PaginatedResponse<Listing>>("/listings/my_listings/");
+        return response.results;
+    }
+
+    async updateListing(id: number, data: UpdateListingRequest): Promise<Listing> {
+        return this.request<Listing>(`/listings/${id}/`, {
+            method: "PATCH",
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteListing(id: number): Promise<void> {
+        await this.request<void>(`/listings/${id}/`, {
+            method: "DELETE",
+        });
+    }
+
+    async publishListing(id: number): Promise<Listing> {
+        return this.request<Listing>(`/listings/${id}/publish/`, {
+            method: "POST",
+        });
     }
 }
 

@@ -6,10 +6,17 @@ import { Section, Listing } from "@/lib/types";
 import SectionTabs from "./SectionTabs";
 import ListingCard from "./ListingCard";
 
+// Available listing types
+const LISTING_TYPES = [
+    { value: "cerco", label: "Cerco", color: "blue" },
+    { value: "offro", label: "Offro", color: "emerald" },
+] as const;
+
 export default function ListingsSection() {
     const [sections, setSections] = useState<Section[]>([]);
     const [listings, setListings] = useState<Listing[]>([]);
     const [activeSection, setActiveSection] = useState<string | null>(null);
+    const [activeListingType, setActiveListingType] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -27,13 +34,16 @@ export default function ListingsSection() {
         fetchSections();
     }, []);
 
-    // Fetch listings when section changes
+    // Fetch listings when section or listing type changes
     useEffect(() => {
         const fetchListings = async () => {
             setIsLoading(true);
             setError(null);
             try {
-                const data = await api.getListings(activeSection ?? undefined);
+                const data = await api.getListings(
+                    activeSection ?? undefined,
+                    activeListingType ?? undefined
+                );
                 setListings(data);
             } catch (err) {
                 console.error("Failed to fetch listings:", err);
@@ -43,7 +53,7 @@ export default function ListingsSection() {
             }
         };
         fetchListings();
-    }, [activeSection]);
+    }, [activeSection, activeListingType]);
 
     return (
         <div>
@@ -53,6 +63,56 @@ export default function ListingsSection() {
                 activeSection={activeSection}
                 onSectionChange={setActiveSection}
             />
+
+            {/* Listing type filter */}
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                    Filtra per tipo:
+                </span>
+                {LISTING_TYPES.map((type) => {
+                    const isActive = activeListingType === type.value;
+                    return (
+                        <button
+                            key={type.value}
+                            onClick={() =>
+                                setActiveListingType(isActive ? null : type.value)
+                            }
+                            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all ${isActive
+                                    ? type.color === "emerald"
+                                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/25"
+                                        : "bg-blue-600 text-white shadow-md shadow-blue-500/25"
+                                    : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                                }`}
+                        >
+                            {isActive && (
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={2.5}
+                                    stroke="currentColor"
+                                    className="h-3.5 w-3.5"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M4.5 12.75l6 6 9-13.5"
+                                    />
+                                </svg>
+                            )}
+                            {type.label}
+                        </button>
+                    );
+                })}
+                {activeListingType && (
+                    <button
+                        onClick={() => setActiveListingType(null)}
+                        className="text-sm text-zinc-500 underline-offset-2 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
+                    >
+                        Mostra tutti
+                    </button>
+                )}
+            </div>
 
             {/* Error state */}
             {error && (
