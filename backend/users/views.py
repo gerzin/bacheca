@@ -5,6 +5,8 @@ from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Ban
 from .permissions import IsOwnerOrStaff, IsStaffUser
@@ -12,6 +14,7 @@ from .serializers import (
     BanCreateSerializer,
     BanSerializer,
     ChangePasswordSerializer,
+    LoginSerializer,
     UserAdminSerializer,
     UserCreateSerializer,
     UserDetailSerializer,
@@ -19,6 +22,44 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+
+class LoginView(APIView):
+    """
+    Login with email or phone number.
+
+    POST /api/auth/login/
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data["user"]
+
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+
+        return Response(
+            {
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "full_name": user.get_full_name(),
+                    "phone_number": user.phone_number,
+                    "is_staff": user.is_staff,
+                },
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class RegisterView(generics.CreateAPIView):

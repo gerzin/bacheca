@@ -4,10 +4,87 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import Ban
 
 User = get_user_model()
+
+
+class LoginSerializer(serializers.Serializer):
+    """Serializer for login with email or phone number."""
+
+    identifier = serializers.CharField(
+        required=True,
+        help_text="Email address or phone number (with +39 prefix)",
+    )
+    password = serializers.CharField(
+        required=True,
+        write_only=True,
+        style={"input_type": "password"},
+    )
+
+    def validate_identifier(self, value):
+        """Normalize phone number if needed."""
+        # If it looks like a phone number, normalize it
+        if value and not "@" in value:
+            # Remove spaces and dashes
+            value = value.replace(" ", "").replace("-", "")
+            # Add +39 prefix if not present and looks like Italian number
+            if value.isdigit():
+                value = f"+39{value}"
+            elif value.startswith("39") and value[2:].isdigit():
+                value = f"+{value}"
+        return value
+
+    def validate(self, attrs):
+        """Validate credentials and return user."""
+        identifier = attrs.get("identifier")
+        password = attrs.get("password")
+
+        # Try to find user by email or phone
+        user = None
+        if "@" in identifier:
+            user = User.objects.filter(email__iexact=identifier).first()
+        else:
+            user = User.objects.filter(phone_number=identifier).first()
+
+        if not user:
+            raise serializers.ValidationError(
+                {"identifier": "No account found with this email or phone number."}
+            )
+
+        if not user.check_password(password):
+            raise serializers.ValidationError(
+                {"password": "Incorrect password."}
+            )
+
+        if not user.is_active:
+            raise serializers.ValidationError(
+                {"identifier": "This account has been deactivated."}
+            )
+
+        if user.is_currently_banned:
+            raise serializers.ValidationError(
+                {"identifier": "This account is currently banned."}
+            )
+
+        attrs["user"] = user
+        return attrs
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Custom JWT token serializer with additional user info."""
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Add custom claims
+        token["email"] = user.email
+        token["first_name"] = user.first_name
+        token["last_name"] = user.last_name
+        token["is_staff"] = user.is_staff
+        return token
 
 
 class UserSerializer(serializers.ModelSerializer):
