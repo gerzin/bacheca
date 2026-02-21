@@ -1,4 +1,4 @@
-import { LoginRequest, LoginResponse, ApiError } from "./types";
+import { LoginRequest, LoginResponse, ApiError, Section, Listing, PaginatedResponse } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -100,6 +100,28 @@ class ApiService {
             this.logout();
             return null;
         }
+    }
+
+    // Sections
+    async getSections(): Promise<Section[]> {
+        const response = await this.request<PaginatedResponse<Section>>("/sections/");
+        return response.results;
+    }
+
+    // Listings
+    async getListings(sectionSlug?: string): Promise<Listing[]> {
+        const params = new URLSearchParams();
+        if (sectionSlug) {
+            params.append("section", sectionSlug);
+        }
+        const queryString = params.toString();
+        const endpoint = `/listings/${queryString ? `?${queryString}` : ""}`;
+        const response = await this.request<PaginatedResponse<Listing>>(endpoint);
+        return response.results;
+    }
+
+    async getListing(id: number): Promise<Listing> {
+        return this.request<Listing>(`/listings/${id}/`);
     }
 }
 
