@@ -77,7 +77,6 @@ class User(AbstractUser):
         "phone number",
         validators=[phone_regex],
         max_length=13,
-        blank=True,
     )
 
     # Protection flag - protected users cannot be banned

@@ -135,8 +135,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     # Override phone_number to skip model validator during input
     phone_number = serializers.CharField(
         max_length=13,
-        required=False,
-        allow_blank=True,
+        required=True,
     )
 
     class Meta:

@@ -67,7 +67,7 @@ class ListingAuthorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "full_name", "is_staff"]
+        fields = ["id", "first_name", "last_name", "full_name", "phone_number", "is_staff"]
         read_only_fields = fields
 
 
