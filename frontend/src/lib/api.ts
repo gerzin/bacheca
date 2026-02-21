@@ -6,7 +6,7 @@ class ApiService {
     private baseUrl: string;
 
     constructor() {
-        this.baseUrl = `${API_URL}/api`;
+        this.baseUrl = `${API_URL}/api/v1`;
     }
 
     private async request<T>(
