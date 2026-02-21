@@ -1,32 +1,9 @@
+import Header from "./components/Header";
+
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
-      {/* Mobile-first header */}
-      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/80">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-            Bacheca
-          </h1>
-          <nav className="flex items-center gap-2">
-            <button className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="h-6 w-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                />
-              </svg>
-            </button>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* Main content - mobile-first with responsive padding */}
       <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
