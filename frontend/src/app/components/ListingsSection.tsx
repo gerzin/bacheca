@@ -78,10 +78,10 @@ export default function ListingsSection() {
                                 setActiveListingType(isActive ? null : type.value)
                             }
                             className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all ${isActive
-                                    ? type.color === "emerald"
-                                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/25"
-                                        : "bg-blue-600 text-white shadow-md shadow-blue-500/25"
-                                    : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                                ? type.color === "emerald"
+                                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/25"
+                                    : "bg-blue-600 text-white shadow-md shadow-blue-500/25"
+                                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                                 }`}
                         >
                             {isActive && (

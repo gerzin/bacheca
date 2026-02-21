@@ -212,14 +212,14 @@ export default function EditListingPage({
                                     type="button"
                                     onClick={() => setListingType(type.value)}
                                     className={`rounded-xl border-2 p-4 text-left transition-all ${listingType === type.value
-                                            ? "border-violet-500 bg-violet-50 dark:border-violet-400 dark:bg-violet-900/20"
-                                            : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
+                                        ? "border-violet-500 bg-violet-50 dark:border-violet-400 dark:bg-violet-900/20"
+                                        : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
                                         }`}
                                 >
                                     <span
                                         className={`block font-medium ${listingType === type.value
-                                                ? "text-violet-700 dark:text-violet-300"
-                                                : "text-zinc-900 dark:text-zinc-100"
+                                            ? "text-violet-700 dark:text-violet-300"
+                                            : "text-zinc-900 dark:text-zinc-100"
                                             }`}
                                     >
                                         {type.label}
