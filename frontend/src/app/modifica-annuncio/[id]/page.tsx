@@ -6,11 +6,6 @@ import Link from "next/link";
 import { api, ApiServiceError } from "@/lib/api";
 import { Listing, User } from "@/lib/types";
 
-const LISTING_TYPES = [
-    { value: "offro", label: "Offro", description: "Offro qualcosa" },
-    { value: "cerco", label: "Cerco", description: "Sto cercando qualcosa" },
-] as const;
-
 // Maximum days for regular users
 const MAX_DURATION_DAYS = 14;
 
@@ -30,7 +25,7 @@ export default function EditListingPage({
 
     // Form state
     const [title, setTitle] = useState("");
-    const [listingType, setListingType] = useState<"cerco" | "offro">("offro");
+    const [listingType, setListingType] = useState<string | null>(null);
     const [description, setDescription] = useState("");
     const [location, setLocation] = useState("");
     const [price, setPrice] = useState("");
@@ -38,6 +33,9 @@ export default function EditListingPage({
     const [contactEmail, setContactEmail] = useState("");
     const [contactPhone, setContactPhone] = useState("");
     const [expiresAt, setExpiresAt] = useState("");
+
+    // Check if section requires listing types
+    const sectionRequiresListingType = (listing?.section.allowed_listing_types?.length ?? 0) > 0;
 
     // Check authentication on mount
     useEffect(() => {
@@ -105,7 +103,7 @@ export default function EditListingPage({
         try {
             await api.updateListing(Number(id), {
                 title,
-                listing_type: listingType,
+                listing_type: sectionRequiresListingType ? listingType : undefined,
                 description,
                 location: location || undefined,
                 price: price || null,
@@ -200,37 +198,36 @@ export default function EditListingPage({
                         </p>
                     </div>
 
-                    {/* Listing type */}
-                    <div>
-                        <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            Tipo di annuncio *
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {LISTING_TYPES.map((type) => (
-                                <button
-                                    key={type.value}
-                                    type="button"
-                                    onClick={() => setListingType(type.value)}
-                                    className={`rounded-xl border-2 p-4 text-left transition-all ${listingType === type.value
-                                        ? "border-violet-500 bg-violet-50 dark:border-violet-400 dark:bg-violet-900/20"
-                                        : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
-                                        }`}
-                                >
-                                    <span
-                                        className={`block font-medium ${listingType === type.value
-                                            ? "text-violet-700 dark:text-violet-300"
-                                            : "text-zinc-900 dark:text-zinc-100"
+                    {/* Listing type - only show if section requires it */}
+                    {sectionRequiresListingType && listing && (
+                        <div>
+                            <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Tipo di annuncio *
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                {listing.section.allowed_listing_types.map((type) => (
+                                    <button
+                                        key={type.value}
+                                        type="button"
+                                        onClick={() => setListingType(type.value)}
+                                        className={`rounded-xl border-2 p-4 text-left transition-all ${listingType === type.value
+                                            ? "border-violet-500 bg-violet-50 dark:border-violet-400 dark:bg-violet-900/20"
+                                            : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
                                             }`}
                                     >
-                                        {type.label}
-                                    </span>
-                                    <span className="mt-1 block text-sm text-zinc-500 dark:text-zinc-400">
-                                        {type.description}
-                                    </span>
-                                </button>
-                            ))}
+                                        <span
+                                            className={`block font-medium ${listingType === type.value
+                                                ? "text-violet-700 dark:text-violet-300"
+                                                : "text-zinc-900 dark:text-zinc-100"
+                                                }`}
+                                        >
+                                            {type.label}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Title */}
                     <div>

@@ -81,11 +81,17 @@ class ListingSerializer(serializers.ModelSerializer):
         write_only=True,
     )
     author = ListingAuthorSerializer(read_only=True)
-    listing_type_display = serializers.CharField(
-        source="get_listing_type_display", read_only=True
-    )
+    listing_type_display = serializers.SerializerMethodField()
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
+
+    def get_listing_type_display(self, obj):
+        """Get the display label for the listing type from the section."""
+        if not obj.listing_type:
+            return None
+        label = obj.section.get_listing_type_label(obj.listing_type)
+        # Fallback to raw value (capitalized) if label not found
+        return label or obj.listing_type.capitalize()
 
     class Meta:
         model = Listing
@@ -140,6 +146,12 @@ class ListingCreateSerializer(serializers.ModelSerializer):
         queryset=Section.objects.filter(is_active=True),
         source="section",
     )
+    listing_type = serializers.CharField(
+        max_length=50,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
     contact_phone = serializers.CharField(
         max_length=13,
         required=False,
@@ -178,21 +190,42 @@ class ListingCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        """Validate listing type is allowed in the selected section."""
+        """Validate listing type based on section requirements."""
         section = attrs.get("section")
         listing_type = attrs.get("listing_type")
 
-        if section and section.allowed_listing_types:
-            if listing_type not in section.allowed_listing_types:
-                allowed = ", ".join(section.allowed_listing_types)
-                raise serializers.ValidationError(
-                    {
-                        "listing_type": (
-                            f"'{listing_type}' is not allowed in section '{section.name}'. "
-                            f"Allowed types: {allowed}"
-                        )
-                    }
-                )
+        # Normalize empty string to None
+        if listing_type == "":
+            attrs["listing_type"] = None
+            listing_type = None
+
+        if section:
+            allowed_values = section.get_allowed_type_values()
+            if allowed_values:
+                # Section requires a listing type
+                if not listing_type:
+                    allowed = ", ".join(allowed_values)
+                    raise serializers.ValidationError(
+                        {
+                            "listing_type": (
+                                f"This section requires a listing type. "
+                                f"Allowed types: {allowed}"
+                            )
+                        }
+                    )
+                if listing_type not in allowed_values:
+                    allowed = ", ".join(allowed_values)
+                    raise serializers.ValidationError(
+                        {
+                            "listing_type": (
+                                f"'{listing_type}' is not allowed in section '{section.name}'. "
+                                f"Allowed types: {allowed}"
+                            )
+                        }
+                    )
+            else:
+                # Section doesn't use listing types - clear it
+                attrs["listing_type"] = None
 
         # Validate expires_at for non-privileged users
         user = self.context["request"].user
@@ -235,6 +268,12 @@ class ListingCreateSerializer(serializers.ModelSerializer):
 class ListingUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating a listing."""
 
+    listing_type = serializers.CharField(
+        max_length=50,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
     contact_phone = serializers.CharField(
         max_length=13,
         required=False,
@@ -280,14 +319,25 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
 
         listing_type = attrs.get("listing_type")
 
+        # Normalize empty string to None
+        if listing_type == "":
+            attrs["listing_type"] = None
+            listing_type = None
+
         if self.instance is None:
             return attrs
 
         section = self.instance.section
+        allowed_values = section.get_allowed_type_values()
 
-        if listing_type and section.allowed_listing_types:
-            if listing_type not in section.allowed_listing_types:
-                allowed = ", ".join(section.allowed_listing_types)
+        # If section doesn't use listing types, clear it
+        if not allowed_values:
+            if "listing_type" in attrs:
+                attrs["listing_type"] = None
+        elif listing_type is not None:
+            # Section has allowed types - validate the value
+            if listing_type not in allowed_values:
+                allowed = ", ".join(allowed_values)
                 raise serializers.ValidationError(
                     {
                         "listing_type": (

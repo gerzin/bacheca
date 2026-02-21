@@ -6,11 +6,6 @@ import Link from "next/link";
 import { api, ApiServiceError } from "@/lib/api";
 import { Section, User } from "@/lib/types";
 
-const LISTING_TYPES = [
-    { value: "offro", label: "Offro", description: "Offro qualcosa" },
-    { value: "cerco", label: "Cerco", description: "Sto cercando qualcosa" },
-] as const;
-
 // Maximum days for regular users
 const MAX_DURATION_DAYS = 14;
 
@@ -25,7 +20,7 @@ export default function CreateListingPage() {
     // Form state
     const [sectionId, setSectionId] = useState<number | "">("");
     const [title, setTitle] = useState("");
-    const [listingType, setListingType] = useState<"cerco" | "offro">("offro");
+    const [listingType, setListingType] = useState<string | null>(null);
     const [description, setDescription] = useState("");
     const [location, setLocation] = useState("");
     const [price, setPrice] = useState("");
@@ -33,6 +28,26 @@ export default function CreateListingPage() {
     const [contactEmail, setContactEmail] = useState("");
     const [contactPhone, setContactPhone] = useState("");
     const [expiresAt, setExpiresAt] = useState("");
+
+    // Get the selected section
+    const selectedSection = sectionId ? sections.find((s) => s.id === sectionId) : null;
+    const sectionRequiresListingType = (selectedSection?.allowed_listing_types?.length ?? 0) > 0;
+
+    // Reset listing type when section changes
+    const handleSectionChange = (newSectionId: number | "") => {
+        setSectionId(newSectionId);
+        if (newSectionId) {
+            const section = sections.find((s) => s.id === newSectionId);
+            const sectionTypes = section?.allowed_listing_types || [];
+            if (sectionTypes.length > 0) {
+                // Section requires listing type - set first type as default
+                setListingType(sectionTypes[0].value);
+            } else {
+                // Section doesn't use listing types
+                setListingType(null);
+            }
+        }
+    };
 
     // Check authentication on mount
     useEffect(() => {
@@ -90,7 +105,7 @@ export default function CreateListingPage() {
             await api.createListing({
                 section_id: sectionId as number,
                 title,
-                listing_type: listingType,
+                listing_type: sectionRequiresListingType ? listingType : undefined,
                 description,
                 location: location || undefined,
                 price: price || undefined,
@@ -172,7 +187,7 @@ export default function CreateListingPage() {
                         <select
                             id="section"
                             value={sectionId}
-                            onChange={(e) => setSectionId(Number(e.target.value))}
+                            onChange={(e) => handleSectionChange(e.target.value ? Number(e.target.value) : "")}
                             required
                             className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 transition-colors focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                         >
@@ -185,37 +200,36 @@ export default function CreateListingPage() {
                         </select>
                     </div>
 
-                    {/* Listing type */}
-                    <div>
-                        <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            Tipo di annuncio *
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {LISTING_TYPES.map((type) => (
-                                <button
-                                    key={type.value}
-                                    type="button"
-                                    onClick={() => setListingType(type.value)}
-                                    className={`rounded-xl border-2 p-4 text-left transition-all ${listingType === type.value
-                                        ? "border-violet-500 bg-violet-50 dark:border-violet-400 dark:bg-violet-900/20"
-                                        : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
-                                        }`}
-                                >
-                                    <span
-                                        className={`block font-medium ${listingType === type.value
-                                            ? "text-violet-700 dark:text-violet-300"
-                                            : "text-zinc-900 dark:text-zinc-100"
+                    {/* Listing type - only show if section requires it */}
+                    {sectionRequiresListingType && selectedSection && (
+                        <div>
+                            <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Tipo di annuncio *
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                {selectedSection.allowed_listing_types.map((type) => (
+                                    <button
+                                        key={type.value}
+                                        type="button"
+                                        onClick={() => setListingType(type.value)}
+                                        className={`rounded-xl border-2 p-4 text-left transition-all ${listingType === type.value
+                                            ? "border-violet-500 bg-violet-50 dark:border-violet-400 dark:bg-violet-900/20"
+                                            : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
                                             }`}
                                     >
-                                        {type.label}
-                                    </span>
-                                    <span className="mt-1 block text-sm text-zinc-500 dark:text-zinc-400">
-                                        {type.description}
-                                    </span>
-                                </button>
-                            ))}
+                                        <span
+                                            className={`block font-medium ${listingType === type.value
+                                                ? "text-violet-700 dark:text-violet-300"
+                                                : "text-zinc-900 dark:text-zinc-100"
+                                                }`}
+                                        >
+                                            {type.label}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Title */}
                     <div>

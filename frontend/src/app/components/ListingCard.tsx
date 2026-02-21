@@ -103,14 +103,15 @@ export default function ListingCard({ listing, currentUser, onDelete, onUserBann
 
             {/* Header with type badge, date, and staff actions */}
             <div className="mb-3 flex items-start justify-between gap-2">
-                <span
-                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${listing.listing_type === "offro"
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                        }`}
-                >
-                    {listing.listing_type_display}
-                </span>
+                {listing.listing_type ? (
+                    <span className="shrink-0 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                        {listing.listing_type_display}
+                    </span>
+                ) : (
+                    <span className="shrink-0 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                        {listing.section.name}
+                    </span>
+                )}
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-zinc-500 dark:text-zinc-400">
                         {formattedDate}

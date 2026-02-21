@@ -2,15 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
-import { Section, Listing, User } from "@/lib/types";
+import { Section, Listing, User, ListingTypeOption } from "@/lib/types";
 import SectionTabs from "./SectionTabs";
 import ListingCard from "./ListingCard";
 
-// Available listing types
-const LISTING_TYPES = [
-    { value: "offro", label: "Offro", color: "emerald" },
-    { value: "cerco", label: "Cerco", color: "blue" },
-] as const;
+// Helper to get unique listing types across all sections
+function getAllListingTypes(sections: Section[]): ListingTypeOption[] {
+    const typeMap = new Map<string, ListingTypeOption>();
+    for (const section of sections) {
+        for (const lt of section.allowed_listing_types || []) {
+            if (!typeMap.has(lt.value)) {
+                typeMap.set(lt.value, lt);
+            }
+        }
+    }
+    return Array.from(typeMap.values());
+}
 
 export default function ListingsSection() {
     const [sections, setSections] = useState<Section[]>([]);
@@ -80,6 +87,33 @@ export default function ListingsSection() {
         fetchListings();
     }, [activeSection, activeListingType]);
 
+    // Get the currently active section object
+    const currentSection = activeSection
+        ? sections.find((s) => s.slug === activeSection)
+        : null;
+
+    // Get available listing types for the current view
+    const availableListingTypes: ListingTypeOption[] = activeSection
+        ? currentSection?.allowed_listing_types || []
+        : getAllListingTypes(sections);
+
+    // Check if the current section (or all sections when none selected) supports listing types
+    const showListingTypeFilter = availableListingTypes.length > 0;
+
+    // Clear listing type filter when switching to a section without that type
+    const handleSectionChange = (slug: string | null) => {
+        setActiveSection(slug);
+        // Clear listing type if the new section doesn't support the current type
+        if (slug) {
+            const section = sections.find((s) => s.slug === slug);
+            const sectionTypes = section?.allowed_listing_types || [];
+            const hasCurrentType = sectionTypes.some((t) => t.value === activeListingType);
+            if (!hasCurrentType) {
+                setActiveListingType(null);
+            }
+        }
+    };
+
     // Handle listing deletion (staff action)
     const handleListingDelete = (listingId: number) => {
         setListings((prev) => prev.filter((l) => l.id !== listingId));
@@ -96,58 +130,58 @@ export default function ListingsSection() {
             <SectionTabs
                 sections={sections}
                 activeSection={activeSection}
-                onSectionChange={setActiveSection}
+                onSectionChange={handleSectionChange}
             />
 
-            {/* Listing type filter */}
-            <div className="mb-6 flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                    Filtra per tipo:
-                </span>
-                {LISTING_TYPES.map((type) => {
-                    const isActive = activeListingType === type.value;
-                    return (
+            {/* Listing type filter - only show when section supports it */}
+            {showListingTypeFilter && (
+                <div className="mb-6 flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                        Filtra per tipo:
+                    </span>
+                    {availableListingTypes.map((type) => {
+                        const isActive = activeListingType === type.value;
+                        return (
+                            <button
+                                key={type.value}
+                                onClick={() =>
+                                    setActiveListingType(isActive ? null : type.value)
+                                }
+                                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all ${isActive
+                                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/25"
+                                    : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                                    }`}
+                            >
+                                {isActive && (
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        strokeWidth={2.5}
+                                        stroke="currentColor"
+                                        className="h-3.5 w-3.5"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M4.5 12.75l6 6 9-13.5"
+                                        />
+                                    </svg>
+                                )}
+                                {type.label}
+                            </button>
+                        );
+                    })}
+                    {activeListingType && (
                         <button
-                            key={type.value}
-                            onClick={() =>
-                                setActiveListingType(isActive ? null : type.value)
-                            }
-                            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all ${isActive
-                                ? type.color === "emerald"
-                                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/25"
-                                    : "bg-blue-600 text-white shadow-md shadow-blue-500/25"
-                                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                                }`}
+                            onClick={() => setActiveListingType(null)}
+                            className="text-sm text-zinc-500 underline-offset-2 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
                         >
-                            {isActive && (
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth={2.5}
-                                    stroke="currentColor"
-                                    className="h-3.5 w-3.5"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M4.5 12.75l6 6 9-13.5"
-                                    />
-                                </svg>
-                            )}
-                            {type.label}
+                            Mostra tutti
                         </button>
-                    );
-                })}
-                {activeListingType && (
-                    <button
-                        onClick={() => setActiveListingType(null)}
-                        className="text-sm text-zinc-500 underline-offset-2 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
-                    >
-                        Mostra tutti
-                    </button>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
 
             {/* Error state */}
             {error && (

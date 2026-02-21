@@ -24,7 +24,7 @@ class ListingFilter(filters.FilterSet):
     """Filter class for Listing queryset."""
 
     section = filters.CharFilter(field_name="section__slug")
-    listing_type = filters.ChoiceFilter(choices=Listing.ListingType.choices)
+    listing_type = filters.CharFilter()  # Dynamic per section, no predefined choices
     status = filters.ChoiceFilter(choices=Listing.Status.choices)
     author = filters.NumberFilter(field_name="author__id")
     location = filters.CharFilter(lookup_expr="icontains")

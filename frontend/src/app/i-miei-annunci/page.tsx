@@ -224,14 +224,11 @@ export default function MyListingsPage() {
                                     <div className="flex-1 min-w-0">
                                         <div className="mb-2 flex flex-wrap items-center gap-2">
                                             {getStatusBadge(listing)}
-                                            <span
-                                                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${listing.listing_type === "cerco"
-                                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                                        : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                                    }`}
-                                            >
-                                                {listing.listing_type_display}
-                                            </span>
+                                            {listing.listing_type && (
+                                                <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                                                    {listing.listing_type_display}
+                                                </span>
+                                            )}
                                             <span className="text-xs text-zinc-500 dark:text-zinc-400">
                                                 {listing.section.name}
                                             </span>

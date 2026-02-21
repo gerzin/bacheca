@@ -39,13 +39,18 @@ export interface ApiError {
 }
 
 // Bulletin types
+export interface ListingTypeOption {
+    value: string;
+    label: string;
+}
+
 export interface Section {
     id: number;
     name: string;
     slug: string;
     description: string;
     icon: string;
-    allowed_listing_types: string[];
+    allowed_listing_types: ListingTypeOption[];
     listing_count: number;
 }
 
@@ -62,8 +67,8 @@ export interface Listing {
     section: Section;
     author: ListingAuthor;
     title: string;
-    listing_type: "cerco" | "offro";
-    listing_type_display: string;
+    listing_type: string | null;
+    listing_type_display: string | null;
     description: string;
     location: string;
     price: string | null;
@@ -90,7 +95,7 @@ export interface PaginatedResponse<T> {
 export interface CreateListingRequest {
     section_id: number;
     title: string;
-    listing_type: "cerco" | "offro";
+    listing_type?: string | null;
     description: string;
     location?: string;
     price?: string;
@@ -103,7 +108,7 @@ export interface CreateListingRequest {
 // Update listing
 export interface UpdateListingRequest {
     title?: string;
-    listing_type?: "cerco" | "offro";
+    listing_type?: string | null;
     description?: string;
     location?: string;
     price?: string | null;
