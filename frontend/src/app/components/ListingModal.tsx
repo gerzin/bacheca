@@ -55,7 +55,7 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
             onClick={onClose}
         >
             <div
-                className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-zinc-900"
+                className="relative max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-zinc-900"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Close button */}
@@ -79,6 +79,9 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
                         />
                     </svg>
                 </button>
+
+                {/* Scrollable content */}
+                <div className="scrollbar-hidden max-h-[90vh] overflow-y-auto pb-16">
 
                 {/* Header */}
                 <div className="border-b border-zinc-100 p-6 dark:border-zinc-800">
@@ -107,7 +110,7 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
                         <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                             Descrizione
                         </h3>
-                        <p className="whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+                        <p className="whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-300">
                             {listing.description}
                         </p>
                     </div>
@@ -234,6 +237,28 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
                             </div>
                         </div>
                     </div>
+                </div>
+                </div>
+
+                {/* Scroll indicator gradient */}
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-zinc-900" />
+                
+                {/* Scroll down hint */}
+                <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                        className="h-5 w-5 text-zinc-400 dark:text-zinc-500"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                        />
+                    </svg>
                 </div>
             </div>
         </div>

@@ -218,7 +218,7 @@ export default function ListingCard({ listing, currentUser, onDelete, onUserBann
             </h3>
 
             {/* Description */}
-            <p className="mb-3 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mb-3 line-clamp-2 overflow-hidden text-sm text-zinc-600 break-words dark:text-zinc-400">
                 {listing.description}
             </p>
 
