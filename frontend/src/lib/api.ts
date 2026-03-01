@@ -1,4 +1,4 @@
-import { LoginRequest, LoginResponse, ApiError, Section, Listing, PaginatedResponse, CreateListingRequest, UpdateListingRequest, RegisterRequest, User } from "./types";
+import { LoginRequest, LoginResponse, ApiError, Section, Listing, PaginatedResponse, CreateListingRequest, UpdateListingRequest, RegisterRequest, User, UpdateProfileRequest, ChangePasswordRequest } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -190,6 +190,25 @@ class ApiService {
     async unbanUser(userId: number): Promise<void> {
         await this.request<void>(`/users/${userId}/unban/`, {
             method: "POST",
+        });
+    }
+
+    async updateProfile(data: UpdateProfileRequest): Promise<User> {
+        const user = await this.request<User>("/users/me/", {
+            method: "PATCH",
+            body: JSON.stringify(data),
+        });
+        // Update stored user data
+        if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(user));
+        }
+        return user;
+    }
+
+    async changePassword(data: ChangePasswordRequest): Promise<void> {
+        await this.request<{ detail: string }>("/users/change_password/", {
+            method: "POST",
+            body: JSON.stringify(data),
         });
     }
 }

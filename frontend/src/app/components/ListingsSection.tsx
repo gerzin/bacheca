@@ -143,7 +143,7 @@ export default function ListingsSection() {
                         const isActive = activeListingType === type.value;
                         return (
                             <button
-                                key={type.value}
+                                key={type.id}
                                 onClick={() =>
                                     setActiveListingType(isActive ? null : type.value)
                                 }

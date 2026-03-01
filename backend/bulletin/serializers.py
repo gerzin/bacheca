@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Listing, Section
+from .models import Listing, ListingType, Section
 
 User = get_user_model()
 
@@ -14,11 +14,23 @@ User = get_user_model()
 MAX_LISTING_DURATION_DAYS = 14
 
 
+class ListingTypeSerializer(serializers.ModelSerializer):
+    """Serializer for ListingType model."""
+
+    class Meta:
+        model = ListingType
+        fields = ["id", "value", "label"]
+        read_only_fields = fields
+
+
 class SectionSerializer(serializers.ModelSerializer):
     """Serializer for Section model (read-only for regular users)."""
 
     listing_count = serializers.IntegerField(
         source="published_listing_count", read_only=True
+    )
+    allowed_listing_types = ListingTypeSerializer(
+        source="listing_types", many=True, read_only=True
     )
 
     class Meta:
@@ -40,6 +52,9 @@ class SectionAdminSerializer(serializers.ModelSerializer):
 
     listing_count = serializers.IntegerField(
         source="published_listing_count", read_only=True
+    )
+    allowed_listing_types = ListingTypeSerializer(
+        source="listing_types", many=True, read_only=True
     )
 
     class Meta:
@@ -71,37 +86,72 @@ class ListingAuthorSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class ListingSectionSerializer(serializers.ModelSerializer):
+    """Minimal section serializer for listing responses."""
+
+    class Meta:
+        model = Section
+        fields = ["id", "name", "slug"]
+        read_only_fields = fields
+
+
+class ListingTypeDetailSerializer(serializers.ModelSerializer):
+    """ListingType serializer with section info for listing responses."""
+
+    section = ListingSectionSerializer(read_only=True)
+
+    class Meta:
+        model = ListingType
+        fields = ["id", "value", "label", "section"]
+        read_only_fields = fields
+
+
 class ListingSerializer(serializers.ModelSerializer):
     """Serializer for Listing model (list view)."""
 
-    section = SectionSerializer(read_only=True)
-    section_id = serializers.PrimaryKeyRelatedField(
-        queryset=Section.objects.filter(is_active=True),
-        source="section",
+    author = ListingAuthorSerializer(read_only=True)
+    listing_type = ListingTypeDetailSerializer(read_only=True)
+    listing_type_id = serializers.PrimaryKeyRelatedField(
+        queryset=ListingType.objects.all(),
+        source="listing_type",
         write_only=True,
     )
-    author = ListingAuthorSerializer(read_only=True)
+    # Backward compatibility fields
+    section = serializers.SerializerMethodField()
+    listing_type_value = serializers.SerializerMethodField()
     listing_type_display = serializers.SerializerMethodField()
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
 
+    def get_section(self, obj):
+        """Return section data from listing_type."""
+        section = obj.listing_type.section
+        return {
+            "id": section.id,
+            "name": section.name,
+            "slug": section.slug,
+            "description": section.description,
+            "icon": section.icon,
+        }
+
+    def get_listing_type_value(self, obj):
+        """Return the listing type value string for backward compatibility."""
+        return obj.listing_type.value
+
     def get_listing_type_display(self, obj):
-        """Get the display label for the listing type from the section."""
-        if not obj.listing_type:
-            return None
-        label = obj.section.get_listing_type_label(obj.listing_type)
-        # Fallback to raw value (capitalized) if label not found
-        return label or obj.listing_type.capitalize()
+        """Get the display label for the listing type."""
+        return obj.listing_type.label
 
     class Meta:
         model = Listing
         fields = [
             "id",
             "section",
-            "section_id",
             "author",
             "title",
             "listing_type",
+            "listing_type_id",
+            "listing_type_value",
             "listing_type_display",
             "description",
             "location",
@@ -142,15 +192,9 @@ class ListingDetailSerializer(ListingSerializer):
 class ListingCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating a new listing."""
 
-    section_id = serializers.PrimaryKeyRelatedField(
-        queryset=Section.objects.filter(is_active=True),
-        source="section",
-    )
-    listing_type = serializers.CharField(
-        max_length=50,
-        required=False,
-        allow_null=True,
-        allow_blank=True,
+    listing_type_id = serializers.PrimaryKeyRelatedField(
+        queryset=ListingType.objects.select_related("section").filter(section__is_active=True),
+        source="listing_type",
     )
     contact_phone = serializers.CharField(
         max_length=13,
@@ -161,9 +205,8 @@ class ListingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Listing
         fields = [
-            "section_id",
+            "listing_type_id",
             "title",
-            "listing_type",
             "description",
             "location",
             "price",
@@ -190,45 +233,10 @@ class ListingCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        """Validate listing type based on section requirements."""
-        section = attrs.get("section")
-        listing_type = attrs.get("listing_type")
-
-        # Normalize empty string to None
-        if listing_type == "":
-            attrs["listing_type"] = None
-            listing_type = None
-
-        if section:
-            allowed_values = section.get_allowed_type_values()
-            if allowed_values:
-                # Section requires a listing type
-                if not listing_type:
-                    allowed = ", ".join(allowed_values)
-                    raise serializers.ValidationError(
-                        {
-                            "listing_type": (
-                                f"This section requires a listing type. "
-                                f"Allowed types: {allowed}"
-                            )
-                        }
-                    )
-                if listing_type not in allowed_values:
-                    allowed = ", ".join(allowed_values)
-                    raise serializers.ValidationError(
-                        {
-                            "listing_type": (
-                                f"'{listing_type}' is not allowed in section '{section.name}'. "
-                                f"Allowed types: {allowed}"
-                            )
-                        }
-                    )
-            else:
-                # Section doesn't use listing types - clear it
-                attrs["listing_type"] = None
+        """Validate listing data."""
+        user = self.context["request"].user
 
         # Validate expires_at for non-privileged users
-        user = self.context["request"].user
         expires_at = attrs.get("expires_at")
 
         if not user.is_staff:
@@ -268,11 +276,10 @@ class ListingCreateSerializer(serializers.ModelSerializer):
 class ListingUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating a listing."""
 
-    listing_type = serializers.CharField(
-        max_length=50,
+    listing_type_id = serializers.PrimaryKeyRelatedField(
+        queryset=ListingType.objects.select_related("section").filter(section__is_active=True),
+        source="listing_type",
         required=False,
-        allow_null=True,
-        allow_blank=True,
     )
     contact_phone = serializers.CharField(
         max_length=13,
@@ -283,8 +290,8 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Listing
         fields = [
+            "listing_type_id",
             "title",
-            "listing_type",
             "description",
             "location",
             "price",
@@ -309,43 +316,13 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        """Validate listing type is allowed in the section."""
+        """Validate listing data."""
         # Check if user is banned
         user = self.context["request"].user
         if hasattr(user, "is_currently_banned") and user.is_currently_banned:
             raise serializers.ValidationError(
                 {"non_field_errors": ["You are currently banned and cannot update listings."]}
             )
-
-        listing_type = attrs.get("listing_type")
-
-        # Normalize empty string to None
-        if listing_type == "":
-            attrs["listing_type"] = None
-            listing_type = None
-
-        if self.instance is None:
-            return attrs
-
-        section = self.instance.section
-        allowed_values = section.get_allowed_type_values()
-
-        # If section doesn't use listing types, clear it
-        if not allowed_values:
-            if "listing_type" in attrs:
-                attrs["listing_type"] = None
-        elif listing_type is not None:
-            # Section has allowed types - validate the value
-            if listing_type not in allowed_values:
-                allowed = ", ".join(allowed_values)
-                raise serializers.ValidationError(
-                    {
-                        "listing_type": (
-                            f"'{listing_type}' is not allowed in section '{section.name}'. "
-                            f"Allowed types: {allowed}"
-                        )
-                    }
-                )
 
         # Validate expires_at for non-privileged users
         expires_at = attrs.get("expires_at")

@@ -40,8 +40,20 @@ export interface ApiError {
 
 // Bulletin types
 export interface ListingTypeOption {
+    id: number;
     value: string;
     label: string;
+}
+
+export interface ListingTypeDetail {
+    id: number;
+    value: string;
+    label: string;
+    section: {
+        id: number;
+        name: string;
+        slug: string;
+    };
 }
 
 export interface Section {
@@ -68,8 +80,9 @@ export interface Listing {
     section: Section;
     author: ListingAuthor;
     title: string;
-    listing_type: string | null;
-    listing_type_display: string | null;
+    listing_type: ListingTypeDetail;
+    listing_type_value: string;
+    listing_type_display: string;
     description: string;
     location: string;
     price: string | null;
@@ -94,9 +107,8 @@ export interface PaginatedResponse<T> {
 
 // Create listing
 export interface CreateListingRequest {
-    section_id: number;
+    listing_type_id: number;
     title: string;
-    listing_type?: string | null;
     description: string;
     location?: string;
     price?: string;
@@ -108,8 +120,8 @@ export interface CreateListingRequest {
 
 // Update listing
 export interface UpdateListingRequest {
+    listing_type_id?: number;
     title?: string;
-    listing_type?: string | null;
     description?: string;
     location?: string;
     price?: string | null;
@@ -117,4 +129,17 @@ export interface UpdateListingRequest {
     contact_email?: string;
     contact_phone?: string;
     expires_at?: string;
+}
+
+// Update user profile
+export interface UpdateProfileRequest {
+    email?: string;
+    phone_number?: string;
+}
+
+// Change password
+export interface ChangePasswordRequest {
+    old_password: string;
+    new_password: string;
+    new_password_confirm: string;
 }
