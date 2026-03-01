@@ -135,8 +135,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     # Override phone_number to skip model validator during input
     phone_number = serializers.CharField(
         max_length=13,
-        required=False,
-        allow_blank=True,
+        required=True,
     )
 
     class Meta:
@@ -195,6 +194,43 @@ class UserDetailSerializer(UserSerializer):
         if ban:
             return BanSerializer(ban).data
         return None
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for users to update their own profile (email, phone_number)."""
+
+    # Override phone_number to allow input without +39 prefix
+    phone_number = serializers.CharField(
+        max_length=13,
+        required=False,
+    )
+
+    class Meta:
+        model = User
+        fields = ["email", "phone_number"]
+
+    def validate_phone_number(self, value):
+        """Add Italian prefix and validate format."""
+        if not value:
+            return value
+        # Add prefix if not present
+        if not value.startswith("+39"):
+            value = f"+39{value}"
+        # Validate the format
+        import re
+
+        if not re.match(r"^\+39\d{9,10}$", value):
+            raise serializers.ValidationError(
+                "Phone number must be in format: '+39XXXXXXXXX' (Italian format)"
+            )
+        return value
+
+    def validate_email(self, value):
+        """Check that email is unique (excluding current user)."""
+        user = self.instance
+        if User.objects.exclude(pk=user.pk).filter(email__iexact=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
 
 class UserAdminSerializer(UserDetailSerializer):

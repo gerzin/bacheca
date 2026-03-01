@@ -19,6 +19,7 @@ from .serializers import (
     UserCreateSerializer,
     UserDetailSerializer,
     UserSerializer,
+    UserUpdateSerializer,
 )
 
 User = get_user_model()
@@ -110,17 +111,18 @@ class UserViewSet(viewsets.ModelViewSet):
         Get or update the current user's profile.
 
         GET /api/users/me/
-        PATCH /api/users/me/
+        PATCH /api/users/me/ - Only email and phone_number can be updated
         """
         user = request.user
         if request.method == "GET":
             serializer = self.get_serializer(user)
             return Response(serializer.data)
 
-        serializer = UserSerializer(user, data=request.data, partial=True)
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        # Return full user data using detail serializer
+        return Response(UserDetailSerializer(user).data)
 
     @action(detail=False, methods=["post"])
     def change_password(self, request):

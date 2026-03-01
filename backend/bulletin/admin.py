@@ -3,7 +3,26 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Listing, Section
+from .models import Listing, ListingType, Section
+
+
+class ListingTypeInline(admin.TabularInline):
+    """Inline admin for ListingType within Section."""
+
+    model = ListingType
+    extra = 1
+    ordering = ("order", "label")
+
+
+@admin.register(ListingType)
+class ListingTypeAdmin(admin.ModelAdmin):
+    """Admin configuration for the ListingType model."""
+
+    list_display = ("label", "value", "section", "order")
+    list_filter = ("section",)
+    list_editable = ("order",)
+    search_fields = ("label", "value", "section__name")
+    ordering = ("section", "order", "label")
 
 
 @admin.register(Section)
@@ -24,16 +43,16 @@ class SectionAdmin(admin.ModelAdmin):
     search_fields = ("name", "description")
     prepopulated_fields = {"slug": ("name",)}
     ordering = ("order", "name")
+    inlines = [ListingTypeInline]
 
     fieldsets = (
         (None, {"fields": ("name", "slug", "description", "icon")}),
         (
             "Configuration",
             {
-                "fields": ("allowed_listing_types", "order", "is_active"),
+                "fields": ("order", "is_active"),
                 "description": (
-                    "Configure which listing types are allowed in this section. "
-                    "Use ['cerco', 'offro'] or a subset."
+                    "Configure listing types using the inline form below."
                 ),
             },
         ),
@@ -42,10 +61,10 @@ class SectionAdmin(admin.ModelAdmin):
     @admin.display(description="Allowed Types")
     def allowed_types_display(self, obj):
         """Display allowed listing types as badges."""
-        if not obj.allowed_listing_types:
-            return "All types"
-        types = ", ".join(obj.allowed_listing_types)
-        return types
+        types = obj.listing_types.all()
+        if not types:
+            return "No types"
+        return ", ".join(lt.label for lt in types)
 
     @admin.display(description="Published")
     def listing_count(self, obj):
@@ -64,7 +83,7 @@ class ListingAdmin(admin.ModelAdmin):
 
     list_display = (
         "title",
-        "section",
+        "get_section",
         "listing_type",
         "author",
         "status",
@@ -75,8 +94,7 @@ class ListingAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "status",
-        "listing_type",
-        "section",
+        "listing_type__section",
         "is_flagged",
         "created_at",
         "published_at",
@@ -91,7 +109,7 @@ class ListingAdmin(admin.ModelAdmin):
         (
             None,
             {
-                "fields": ("section", "listing_type", "title", "description"),
+                "fields": ("listing_type", "title", "description"),
             },
         ),
         (
@@ -137,6 +155,11 @@ class ListingAdmin(admin.ModelAdmin):
         "flag_listings",
         "unflag_listings",
     ]
+
+    @admin.display(description="Section", ordering="listing_type__section__name")
+    def get_section(self, obj):
+        """Display the section from listing_type."""
+        return obj.listing_type.section.name
 
     @admin.action(description="Publish selected listings")
     def publish_listings(self, request, queryset):

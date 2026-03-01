@@ -23,8 +23,8 @@ from .serializers import (
 class ListingFilter(filters.FilterSet):
     """Filter class for Listing queryset."""
 
-    section = filters.CharFilter(field_name="section__slug")
-    listing_type = filters.CharFilter()  # Dynamic per section, no predefined choices
+    section = filters.CharFilter(field_name="listing_type__section__slug")
+    listing_type = filters.CharFilter(field_name="listing_type__value")
     status = filters.ChoiceFilter(choices=Listing.Status.choices)
     author = filters.NumberFilter(field_name="author__id")
     location = filters.CharFilter(lookup_expr="icontains")
@@ -42,7 +42,6 @@ class ListingFilter(filters.FilterSet):
             Q(title__icontains=value) | Q(description__icontains=value)
         )
 
-
 class SectionViewSet(viewsets.ModelViewSet):
     """
     ViewSet for bulletin sections.
@@ -56,10 +55,10 @@ class SectionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):  # type: ignore[override]
         """Return sections with listing counts."""
-        queryset = Section.objects.annotate(
+        queryset = Section.objects.prefetch_related("listing_types").annotate(
             published_listing_count=Count(
-                "listings",
-                filter=Q(listings__status=Listing.Status.PUBLISHED),
+                "listing_types__listings",
+                filter=Q(listing_types__listings__status=Listing.Status.PUBLISHED),
             )
         )
         # Non-staff users only see active sections
@@ -98,7 +97,9 @@ class ListingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):  # type: ignore[override]
         """Return listings based on user permissions."""
-        queryset = Listing.objects.select_related("section", "author")
+        queryset = Listing.objects.select_related(
+            "author", "listing_type", "listing_type__section"
+        )
 
         # Staff can see all listings
         if self.request.user.is_staff:
@@ -134,7 +135,9 @@ class ListingViewSet(viewsets.ModelViewSet):
 
         GET /api/v1/listings/my-listings/
         """
-        queryset = Listing.objects.filter(author=request.user).select_related("section")
+        queryset = Listing.objects.filter(author=request.user).select_related(
+            "listing_type", "listing_type__section"
+        )
         queryset = self.filter_queryset(queryset)
 
         page = self.paginate_queryset(queryset)

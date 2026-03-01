@@ -14,6 +14,45 @@ if TYPE_CHECKING:
     from django.db.models.manager import RelatedManager
 
 
+class ListingType(models.Model):
+    """
+    Type of listing within a section.
+
+    Each section can have multiple listing types (e.g., "Cerco", "Offro").
+    """
+
+    section = models.ForeignKey(
+        "Section",
+        on_delete=models.CASCADE,
+        related_name="listing_types",
+        verbose_name="section",
+    )
+    value = models.CharField(
+        "value",
+        max_length=50,
+        help_text="Internal value (e.g., 'cerco', 'offro')",
+    )
+    label = models.CharField(
+        "label",
+        max_length=100,
+        help_text="Display label (e.g., 'Cerco', 'Offro')",
+    )
+    order = models.PositiveIntegerField(
+        "display order",
+        default=0,
+        help_text="Order in which types appear (lower = first)",
+    )
+
+    class Meta:
+        verbose_name = "listing type"
+        verbose_name_plural = "listing types"
+        ordering = ["section", "order", "label"]
+        unique_together = [("section", "value")]
+
+    def __str__(self) -> str:
+        return f"{self.section.name} - {self.label}"
+
+
 class Section(models.Model):
     """
     Section/Category for bulletin listings.
@@ -47,14 +86,6 @@ class Section(models.Model):
         help_text="Icon identifier for frontend (e.g., 'briefcase', 'home')",
     )
 
-    # Control which listing types are allowed in this section
-    allowed_listing_types = models.JSONField(
-        "allowed listing types",
-        default=list,
-        blank=True,
-        help_text='List of listing type objects: [{"value": "cerco", "label": "Cerco"}, {"value": "offro", "label": "Offro"}]. Empty list means no listing type required.',
-    )
-
     # Ordering and visibility
     order = models.PositiveIntegerField(
         "display order",
@@ -74,6 +105,7 @@ class Section(models.Model):
     # Type hints for reverse relations
     if TYPE_CHECKING:
         listings: RelatedManager[Listing]
+        listing_types: RelatedManager[ListingType]
 
     class Meta:
         verbose_name = "section"
@@ -87,34 +119,27 @@ class Section(models.Model):
         """Auto-generate slug from name if not provided."""
         if not self.slug:
             self.slug = slugify(self.name)
-        # Ensure allowed_listing_types is a list
-        if self.allowed_listing_types is None:
-            self.allowed_listing_types = []
         super().save(*args, **kwargs)
 
     @property
     def listing_count(self) -> int:
         """Return the number of published listings in this section."""
-        return self.listings.filter(status=Listing.Status.PUBLISHED).count()
+        return Listing.objects.filter(
+            listing_type__section=self,
+            status=Listing.Status.PUBLISHED,
+        ).count()
 
     def get_listing_type_label(self, value: str) -> str | None:
         """Get the display label for a listing type value."""
-        for lt in self.allowed_listing_types:
-            if isinstance(lt, dict) and lt.get("value") == value:
-                return lt.get("label", value)
-            elif lt == value:  # Backward compatibility with old string format
-                return value.capitalize()
-        return None
+        try:
+            lt = self.listing_types.get(value=value)
+            return lt.label
+        except ListingType.DoesNotExist:
+            return None
 
     def get_allowed_type_values(self) -> list[str]:
         """Get list of allowed listing type values."""
-        values = []
-        for lt in self.allowed_listing_types:
-            if isinstance(lt, dict):
-                values.append(lt.get("value", ""))
-            else:  # Backward compatibility with old string format
-                values.append(lt)
-        return values
+        return list(self.listing_types.values_list("value", flat=True))
 
 
 class Listing(models.Model):
@@ -134,11 +159,12 @@ class Listing(models.Model):
         EXPIRED = "expired", "Expired"
 
     # Relationships
-    section = models.ForeignKey(
-        Section,
+    listing_type = models.ForeignKey(
+        ListingType,
         on_delete=models.PROTECT,
         related_name="listings",
-        verbose_name="section",
+        verbose_name="listing type",
+        help_text="Type of listing (determines the section)",
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -151,13 +177,6 @@ class Listing(models.Model):
     title = models.CharField(
         "title",
         max_length=200,
-    )
-    listing_type = models.CharField(
-        "listing type",
-        max_length=50,
-        blank=True,
-        null=True,
-        help_text="Type of listing (defined by section, e.g., 'cerco', 'offro', 'affitto')",
     )
     description = models.TextField(
         "description",
@@ -245,15 +264,17 @@ class Listing(models.Model):
         ordering = ["-published_at", "-created_at"]
         indexes = [
             models.Index(fields=["status", "-published_at"]),
-            models.Index(fields=["section", "status"]),
+            models.Index(fields=["listing_type", "status"]),
             models.Index(fields=["author", "status"]),
         ]
 
     def __str__(self) -> str:
-        if self.listing_type:
-            type_label = self.section.get_listing_type_label(self.listing_type)
-            return f"{self.title} ({type_label})"
-        return f"{self.title} ({self.section.name})"
+        return f"{self.title} ({self.listing_type.label})"
+
+    @property
+    def section(self) -> Section:
+        """Get section from listing_type."""
+        return self.listing_type.section
 
     def save(self, *args, **kwargs) -> None:
         """Set published_at when status changes to published."""

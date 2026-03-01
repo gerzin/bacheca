@@ -35,6 +35,9 @@ COPY --from=builder /app/.venv /app/.venv
 # Copy application code
 COPY --chown=appuser:appgroup . .
 
+# Create staticfiles directory with correct permissions
+RUN mkdir -p /app/staticfiles && chown -R appuser:appgroup /app/staticfiles
+
 # Set environment variables
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONDONTWRITEBYTECODE=1

@@ -93,7 +93,7 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                 email: regEmail,
                 first_name: regFirstName,
                 last_name: regLastName,
-                phone_number: regPhone || undefined,
+                phone_number: regPhone,
                 password: regPassword,
                 password_confirm: regPasswordConfirm,
             });
@@ -183,8 +183,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                             type="button"
                             onClick={() => switchMode("login")}
                             className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${mode === "login"
-                                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                                 }`}
                         >
                             Login
@@ -193,8 +193,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                             type="button"
                             onClick={() => switchMode("register")}
                             className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${mode === "register"
-                                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                                 }`}
                         >
                             Registrati
@@ -216,8 +216,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                                     type="button"
                                     onClick={() => setLoginMethod("email")}
                                     className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${loginMethod === "email"
-                                            ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                                            : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                                        ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                                        : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                                         }`}
                                 >
                                     Email
@@ -226,8 +226,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                                     type="button"
                                     onClick={() => setLoginMethod("phone")}
                                     className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${loginMethod === "phone"
-                                            ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                                            : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                                        ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                                        : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                                         }`}
                                 >
                                     Telefono
@@ -408,7 +408,7 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                                     htmlFor="regPhone"
                                     className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                                 >
-                                    Telefono (opzionale)
+                                    Telefono *
                                 </label>
                                 <div className="flex gap-2">
                                     <span className="flex w-20 items-center justify-center rounded-xl border border-zinc-300 bg-zinc-50 text-sm text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
@@ -421,8 +421,11 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                                         onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, ""))}
                                         placeholder="333 1234567"
                                         className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 transition-colors focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-violet-400"
+                                        required
+                                        minLength={9}
                                     />
                                 </div>
+                                <p className="mt-1 text-xs text-zinc-500">Sarà visibile negli annunci</p>
                             </div>
 
                             <div>
