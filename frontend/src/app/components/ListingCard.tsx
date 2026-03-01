@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Listing, User } from "@/lib/types";
 import { api, ApiServiceError } from "@/lib/api";
+import ListingModal from "./ListingModal";
 
 interface ListingCardProps {
     listing: Listing;
@@ -46,6 +47,7 @@ export default function ListingCard({ listing, currentUser, onDelete, onUserBann
     const [isDeleting, setIsDeleting] = useState(false);
     const [isBanning, setIsBanning] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showModal, setShowModal] = useState(false);
 
     const formattedPrice = formatPrice(listing.price, listing.price_negotiable);
     const formattedDate = listing.published_at
@@ -93,7 +95,11 @@ export default function ListingCard({ listing, currentUser, onDelete, onUserBann
     };
 
     return (
-        <article className="group relative rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+        <>
+        <article 
+            className="group relative cursor-pointer rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+            onClick={() => setShowModal(true)}
+        >
             {/* Error message */}
             {error && (
                 <div className="mb-3 rounded-lg bg-red-50 p-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
@@ -118,7 +124,7 @@ export default function ListingCard({ listing, currentUser, onDelete, onUserBann
                     </span>
                     {/* Staff actions menu */}
                     {isStaff && (
-                        <div className="relative">
+                        <div className="relative" onClick={(e) => e.stopPropagation()}>
                             <button
                                 onClick={() => setShowStaffActions(!showStaffActions)}
                                 className="flex h-6 w-6 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
@@ -310,5 +316,13 @@ export default function ListingCard({ listing, currentUser, onDelete, onUserBann
                 </div>
             </div>
         </article>
+
+        {showModal && (
+            <ListingModal
+                listing={listing}
+                onClose={() => setShowModal(false)}
+            />
+        )}
+        </>
     );
 }
