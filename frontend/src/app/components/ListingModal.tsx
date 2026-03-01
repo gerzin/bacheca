@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Listing } from "@/lib/types";
 
 interface ListingModalProps {
@@ -34,6 +34,22 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
     const formattedDate = listing.published_at
         ? formatDate(listing.published_at)
         : formatDate(listing.created_at);
+
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [canScrollDown, setCanScrollDown] = useState(true);
+
+    const checkScroll = useCallback(() => {
+        const el = scrollRef.current;
+        if (el) {
+            const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 10;
+            setCanScrollDown(!isAtBottom);
+        }
+    }, []);
+
+    // Check scroll on mount and after content renders
+    useEffect(() => {
+        checkScroll();
+    }, [checkScroll]);
 
     // Close on escape key
     useEffect(() => {
@@ -81,7 +97,11 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
                 </button>
 
                 {/* Scrollable content */}
-                <div className="scrollbar-hidden max-h-[90vh] overflow-y-auto pb-16">
+                <div 
+                    ref={scrollRef}
+                    onScroll={checkScroll}
+                    className="scrollbar-hidden max-h-[90vh] overflow-y-auto pb-16"
+                >
 
                 {/* Header */}
                 <div className="border-b border-zinc-100 p-6 dark:border-zinc-800">
@@ -241,25 +261,29 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
                 </div>
 
                 {/* Scroll indicator gradient */}
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-zinc-900" />
+                {canScrollDown && (
+                    <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-zinc-900" />
+                )}
                 
                 {/* Scroll down hint */}
-                <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={2}
-                        stroke="currentColor"
-                        className="h-5 w-5 text-zinc-400 dark:text-zinc-500"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                        />
-                    </svg>
-                </div>
+                {canScrollDown && (
+                    <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                            className="h-5 w-5 text-zinc-400 dark:text-zinc-500"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                            />
+                        </svg>
+                    </div>
+                )}
             </div>
         </div>
     );
